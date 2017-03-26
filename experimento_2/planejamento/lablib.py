@@ -5,38 +5,31 @@ import pandas as pd #data frames (tabelas)
 import scipy as sci #operações numéricas
 import sympy as sym #operação com expressões
 
-#ocasionais
+#adicionais
 import scipy.odr #"mmq" melhorado
 from math import log10, floor #importante para calcular a incerteza com apenas um algarismo significativo
-from os import linesep #pula linha
+from textwrap import dedent #desindenta mult line string
 
-###############################################################################
-#calculo de grandezas físicas
+def _calcula_resistencia(voltagem, corrente):
+    '''
+    Desciçao:
+    - calcula a resistencia usando R = U/i
 
-'''
-Desciçao:
-- calcula a resistencia usando R = U/i
+    parametros:
+    - voltagem: valor da voltagem (volts)
+    - corrente: valor da corrente (amperes)
 
-parametros:
-- voltagem: valor da voltagem (volts)
-- corrente: valor da corrente (amperes)
-
-retorna:
-- resistência (ohms)
-'''
-def _calc_resistencia(voltagem, corrente):
+    retorna:
+    - resistência (ohms)
+    '''
     if(corrente == 0.0):
         return np.nan
     else:
         return abs(voltagem / corrente)
 
-#vetoriza as funções (aplica a função elemento a elemento nos paremetros vetores)
-vCalc_resistencia = np.vectorize(_calc_resistencia)
+#vetoriza
+calcula_resistencia = np.vectorize(_calcula_resistencia)
 
-
-
-###############################################################################
-#calculo de incertezas
 
 def _incerteza_multimetro(medida, modo):
     '''
@@ -89,70 +82,71 @@ def _incerteza_multimetro(medida, modo):
     #calcula a incerteza total a partir da soma dos quadrados das incertezas
     return (inc_resolucao**2 + inc_calibracao**2)**0.5
 
-#vetoriza as funções
+#vetoriza
 incerteza_multimetro = np.vectorize(_incerteza_multimetro)
 
-'''
-Desciçao:
-- calcula a incerteza da resistencia usando R = U/i
 
-parametros:
-- voltagem: valor da voltagem (volts)
-- corrente: valor da corrente (amperes)
-- d_voltagem: incerteza da voltagem (volts)
-- d_corrente: incerteza da corrente (amperes)
-
-retorna:
-- incerteza da resistência (ohms)
-'''
 def _calcInc_resistencia(voltagem, corrente, d_voltagem, d_corrente):
+    '''
+    Desciçao:
+    - calcula a incerteza da resistencia usando R = U/i
+
+    parametros:
+    - voltagem: valor da voltagem (volts)
+    - corrente: valor da corrente (amperes)
+    - d_voltagem: incerteza da voltagem (volts)
+    - d_corrente: incerteza da corrente (amperes)
+
+    retorna:
+    - incerteza da resistência (ohms)
+    '''
+
     if(corrente == 0.0):
         return np.nan
     else:
         return ((1/corrente**2 * d_voltagem**2) + (voltagem**2/corrente**4 * d_corrente**2))**0.5
 
 
-#vetoriza as funções
+#vetoriza
 vCalcInc_resistencia = np.vectorize(_calcInc_resistencia)
 
 
-
-###############################################################################
-#regressão linear com incerteza em x e y
-
-'''
-Desciçao:
-- função linear genérica.
-- calcula y usando y = a*x + b
-- importante para a criação do modelo no odr
-
-parametros:
-- P: vetor contendo os parametros a e b
-- x: valor de x
-
-retorna:
-- valor de t
-'''
 def _funcao_linear(P, x):
+    '''
+    Desciçao:
+    - função linear genérica.
+    - calcula y usando y = a*x + b
+    - importante para a criação do modelo no odr
+
+    parametros:
+    - P: vetor contendo os parametros a e b
+    - x: valor de x
+
+    retorna:
+    - valor de t
+    '''
+
     return P[0]*x + P[1]
 
-'''
-Desciçao:
-- aplica modelo linear usando ODR nos dados
-- aceita incertezas em x e y
-- retorna os coeficientes a, b de y = a*x + b
 
-parametros:
-- x: vetor contendo os valores de x
-- y: vetor contendo os valores de y
-- dx: vetor contendo as incertezas de x
-- dy: vetor contendo as incertezas de x
-
-retorna:
-- dataframe contendo os coeficientes da reta e suas incertezas
-'''
 #define função que encaixa uma reta com odr nos dados
 def odr_linear(x, y, dx, dy):
+    '''
+    Desciçao:
+    - aplica modelo linear usando ODR nos dados
+    - aceita incertezas em x e y
+    - retorna os coeficientes a, b de y = a*x + b
+
+    parametros:
+    - x: vetor contendo os valores de x
+    - y: vetor contendo os valores de y
+    - dx: vetor contendo as incertezas de x
+    - dy: vetor contendo as incertezas de x
+
+    retorna:
+    - dataframe contendo os coeficientes da reta e suas incertezas
+    '''
+
     #cria um modelo linear
     #e.i supõe que os dados seguem a lei y = a*x + b
     odr_modelo_linear = sci.odr.Model(_funcao_linear)
@@ -198,55 +192,67 @@ def odr_linear(x, y, dx, dy):
     #retorna o data frame dos coeficientes
     return df_coeficientes
 
-###############################################################################
-#funções especiais
 
 def _calc_resistencia_minima(voltagem, d_corrente):
     return abs(voltagem / d_corrente)
 
+#vetoriza
 vCalc_resistencia_minima = np.vectorize(_calc_resistencia_minima)
 
-###############################################################################
-#representação de valores
 
-def notacao_cientifica(x):
-    aux = x
-    expoente = 0
-    while aux >= 10:
-        aux = aux / 10
-        expoente = expoente + 1
-    while aux < 1:
-        aux = aux * 10
-        expoente = expoente - 1
+class notacao_cientifica():
+    '''Classe para formatação dos valores +/- incerteza em notação cientifica'''
 
-    return (aux, expoente)
+    def __init__(self, valor, incerteza):
+        self.expoente = floor(log10(incerteza))
+        self.incerteza = round(incerteza, -self.expoente)
+        self.valor = round(valor, -self.expoente)
 
-def algarismo_significativo(valor, incerteza):
-    #casa decimal do algarismo significativo do erro
-    #e.g. sig(0.001) = -3, sig(16) = 1, sig (7) = 0
-    sig = int(floor(log10(abs(incerteza))))
+    def __repr__(self):
+        return '({} +/- {}) * 10**({})'.format(self.valor / self.expoente,
+                                             self.incerteza / self.expoente,
+                                             self.expoente)
+    def __str__(self):
+        return '({} +/- {}) * 10**({})'.format(self.valor / self.expoente,
+                                             self.incerteza / self.expoente,
+                                             self.expoente)
+    def latex(self):
+        return '$({} \\pm {}) \\cdot 10^{{{}}}$'.format(self.valor / self.expoente,
+                                             self.incerteza / self.expoente,
+                                             self.expoente)
 
-    #arredonda para um algarismo significativo
-    #round conta casas decimais como numeros positivos, por isso o "-"
-    valor_sig = round(valor, -sig)
-    incerteza_sig = round(incerteza, -sig)
+class vNotacao_cientifica():
+    '''Classe para formatação de vetores valores +/- incerteza em notação cientifica'''
 
-    incerteza_cientifica = notacao_cientifica(incerteza_sig)
+    def __init__(self, valor, incerteza):
+        valor = np.array(valor)
+        incerteza = np.array(incerteza)
 
-    representacao = str(int(valor_sig * 10**-incerteza_cientifica[1]))
+        self.expoente = np.floor(np.log10(incerteza)).astype(int)
+        self.incerteza = np.array([round(i, -j) for i, j in zip(incerteza, self.expoente)])
+        self.valor = np.array([round(i, -j) for i, j in zip(valor, self.expoente)])
 
-    representacao = representacao + ' \pm '
+    def __repr__(self):
+        return '\n'.join([
+            '({} +/- {}) * 10**({})'.format(i / k, j / k, k) for i, j, k in zip(self.valor,
+                                                                                self.incerteza,
+                                                                                self.expoente)
+        ])
 
-    representacao = representacao + str(int(incerteza_cientifica[0]))
+    def __str__(self):
+        return '\n'.join([
+            '({} +/- {}) * 10**({})'.format(i / k, j / k, k) for i, j, k in zip(self.valor,
+                                                                                self.incerteza,
+                                                                                self.expoente)
+        ])
 
-    representacao = '$(' + representacao + ') \cdot 10^{' + str(int(incerteza_cientifica[1])) + '}$'
+    def latex(self):
+        return [
+            '$({} \\pm {}) \\cdot 10^{{{}}}$'.format(i / k, j / k, k) for i, j, k in zip(self.valor,
+                                                                                self.incerteza,
+                                                                                self.expoente)
+        ]
 
-    return representacao
-
-vAlgarismo_significativo = np.vectorize(algarismo_significativo)
-
-###############################################################################
-#dedução de formulas de propagação de erro
 
 class propaga_incerteza:
     '''Classe para incertezas propagadas'''
@@ -283,64 +289,37 @@ class propaga_incerteza:
 
         #escreve arquivo
         aux_arq = open(path, 'w')
-        aux_arq.write(
-'''Derivadas parciais:
-{}
+        aux_arq.write(dedent('''
+            Derivadas parciais:
+            {}
 
-Equação da incerteza propagada:
-{}'''.format('\n'.join(aux_parciais), aux_incerteza)
-        )
+            Equação da incerteza propagada:
+            {}
+            '''.format('\n'.join(aux_parciais),
+                       aux_incerteza
+                       ))
         aux_arq.close()
 
 
+def tabela_latex(df):
+    '''Transforma data frame em tabela formato latex'''
 
-def tabela_latex_quadriculada(df):
-    #cabeçalho
-    tabela = '\def\arraystretch{1.2}' + linesep + '\\begin{tabular}{|' + 'r|' * df.shape[1] + '}' + linesep + '\\hline' + linesep + '\midrule' + linesep
-    #nome das colunas
-    for nome_coluna in df.columns:
-        tabela = tabela + nome_coluna + ' & '
-    aux_list = list(tabela)
-    aux_list[-2] = '\\\\\\hline' + linesep
-    tabela = ''.join(aux_list)
-
-    #linhas
-    for i in range(df.shape[0]):
-        linha_latex = ''
-        for j in df.columns:
-            linha_latex = linha_latex + str(df.loc[i, j]) + ' & '
-        aux_list = list(linha_latex)
-        aux_list[-2] = '\\\\\\hline' + linesep
-        linha_latex = ''.join(aux_list)
-        tabela = tabela + linha_latex
-
-    #final da tabela
-    tabela = tabela + '\\bottomrule' + linesep
-    tabela = tabela + '\\end{tabular}'
-
-    return tabela
-
-def tabela_latex_aberta(df):
-    #cabeçalho
-    tabela = '\\def\\arraystretch{1.2}' + linesep + '\\begin{tabular}{' + 'r|' * (df.shape[1]-1) + 'r' + '}' + linesep + '\\toprule' + linesep + '\midrule' + linesep
-    #nome das colunas
-    for nome_coluna in df.columns:
-        tabela = tabela + nome_coluna + ' & '
-    aux_list = list(tabela)
-    aux_list[-2] = '\\\\\\hline' + linesep
-    tabela = ''.join(aux_list)
-
-    #linhas
-    for i in range(df.shape[0]):
-        linha_latex = ''
-        for j in df.columns:
-            linha_latex = linha_latex + str(df.loc[i, j]) + ' & '
-        aux_list = list(linha_latex)
-        aux_list[-2] = '\\\\' + linesep
-        linha_latex = ''.join(aux_list)
-        tabela = tabela + linha_latex
-
-    tabela = tabela + '\\bottomrule' + linesep
-    tabela = tabela + '\\end{tabular}'
-
-    return tabela
+    return dedent('''
+        \\def\\arraystretch{{1.2}}
+        \\begin{{table}}[H]
+            \\centering
+            \\caption{{Descrição}}
+            \\begin{{tabular}}{{{}}}
+            \\toprule
+            \\midrule
+{} \\\\\\hline
+{} \\\\
+            \\bottomrule
+            \\label{{etiqueta}}
+            \\end{{tabular}}
+        \\end{{table}}
+    '''.format(('r|' * df.shape[1])[:-1], #retira o ultimo | de r|r|...r|r|
+                ' & '.join(df.columns),
+                ' \\\\\n'.join([' & '.join([str(j) for j in df.iloc[i, :]]) for i in range(df.shape[0])])
+                )
+              )
