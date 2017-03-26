@@ -1,10 +1,12 @@
 #importa bibliotecas
+#default
 import numpy as np #vetores e matrizes
 import pandas as pd #data frames (tabelas)
 import scipy as sci #operações numéricas
-import scipy.odr #"mmq" melhorado
 import sympy as sym #operação com expressões
-import sympy.parsing.sympy_parser #parse string para objeto sympy'
+
+#ocasionais
+import scipy.odr #"mmq" melhorado
 from math import log10, floor #importante para calcular a incerteza com apenas um algarismo significativo
 from os import linesep #pula linha
 
@@ -36,36 +38,48 @@ vCalc_resistencia = np.vectorize(_calc_resistencia)
 ###############################################################################
 #calculo de incertezas
 
-'''
-Desciçao:
-- calcula a incerteza da voltagem medida
-
-parametros:
-- medida: valor da voltagem medida (volts)
-
-retorna:
-- incerteza da voltagem medida (volts)
-'''
-def _calcInc_voltagem(medida):
-    #dados retirados do manual do multimetro
-    #supõe corrente contínua
+def _incerteza_multimetro(medida, modo):
+    '''
+    Calcula a incerteza de uma medida feito no multímetro.
+    Supõe corrente contínua.
+    Dados retirados do manual
+    '''
 
     #a partir da escala determina a resolução e calibração
-    if(medida <= 600e-3): #escala 600mV
-        resolucao = 0.1e-3
-        calibracao = 0.6/100 * medida + 2*resolucao
-    elif(medida <= 6): #escala 6V
-        resolucao = 0.001
-        calibracao = 0.3/100 * medida + 2*resolucao
-    elif(medida <= 60): #escala 60V
-        resolucao = 0.01
-        calibracao = 0.3/100 * medida + 2*resolucao
-    elif(medida <= 600): #escala 600V
-        resolucao = 0.1
-        calibracao = 0.3/100 * medida + 2*resolucao
-    elif(medida <= 1000): #escala 1000V
-        resolucao = 1
-        calibracao = 0.5/100 * medida + 3*resolucao
+    if(modo in ['voltagem', 'tensão', 'potencial']):
+        if(medida <= 600e-3): #escala 600mV
+            resolucao = 0.1e-3
+            calibracao = 0.6/100 * medida + 2*resolucao
+        elif(medida <= 6): #escala 6V
+            resolucao = 0.001
+            calibracao = 0.3/100 * medida + 2*resolucao
+        elif(medida <= 60): #escala 60V
+            resolucao = 0.01
+            calibracao = 0.3/100 * medida + 2*resolucao
+        elif(medida <= 600): #escala 600V
+            resolucao = 0.1
+            calibracao = 0.3/100 * medida + 2*resolucao
+        elif(medida <= 1000): #escala 1000V
+            resolucao = 1
+            calibracao = 0.5/100 * medida + 3*resolucao
+
+    elif(modo in ['corrente', 'amperagem']):
+        if(medida <= 600e-6): #escala 600microA
+            resolucao = 0.1e-6
+            calibracao = 0.5/100 * medida + 3*resolucao
+        elif(medida <= 6000e-6): #escala 6000microA
+            resolucao = 1e-6
+            calibracao = 0.5/100 * medida + 3*resolucao
+        elif(medida <= 60e-3): #escala 60mA
+            resolucao = 0.01e-3
+            calibracao = 0.5/100 * medida + 3*resolucao
+        elif(medida <= 600e-3): #escala 600mA
+            resolucao = 0.1e-3
+            calibracao = 0.8/100 * medida + 3*resolucao
+        elif(medida <= 10): #escala 10A
+            resolucao = 10e-3
+            calibracao = 1.2/100 * medida + 3*resolucao
+
 
     #supondo f.d.p retangular
     #calcula a incerteza da resolução e calibração
@@ -75,46 +89,8 @@ def _calcInc_voltagem(medida):
     #calcula a incerteza total a partir da soma dos quadrados das incertezas
     return (inc_resolucao**2 + inc_calibracao**2)**0.5
 
-
-'''
-Desciçao:
-- calcula a incerteza da corrente medida
-
-parametros:
-- medida: valor da corrente medida (amperes)
-
-retorna:
-- incerteza da corrente medida (amperes)
-'''
-def _calcInc_corrente(medida):
-    #dados retirados do manual do multimetro
-    #supõe corrente contínua
-
-    #a partir da escala determina a resolução e calibração
-    if(medida <= 600e-6): #escala 600microA
-        resolucao = 0.1e-6
-        calibracao = 0.5/100 * medida + 3*resolucao
-    elif(medida <= 6000e-6): #escala 6000microA
-        resolucao = 1e-6
-        calibracao = 0.5/100 * medida + 3*resolucao
-    elif(medida <= 60e-3): #escala 60mA
-        resolucao = 0.01e-3
-        calibracao = 0.5/100 * medida + 3*resolucao
-    elif(medida <= 600e-3): #escala 600mA
-        resolucao = 0.1e-3
-        calibracao = 0.8/100 * medida + 3*resolucao
-    elif(medida <= 10): #escala 10A
-        resolucao = 10e-3
-        calibracao = 1.2/100 * medida + 3*resolucao
-
-    #supondo f.d.p retangular
-    #calcula a incerteza da resolução e calibração
-    inc_resolucao = resolucao / (2 * 3**0.5)
-    inc_calibracao = 2 * calibracao / (2 * 3**0.5)
-
-    #calcula a incerteza total a partir da soma dos quadrados das incertezas
-    return (inc_resolucao**2 + inc_calibracao**2)**0.5
-
+#vetoriza as funções
+incerteza_multimetro = np.vectorize(_incerteza_multimetro)
 
 '''
 Desciçao:
@@ -137,8 +113,6 @@ def _calcInc_resistencia(voltagem, corrente, d_voltagem, d_corrente):
 
 
 #vetoriza as funções
-vCalcInc_voltagem = np.vectorize(_calcInc_voltagem)
-vCalcInc_corrente = np.vectorize(_calcInc_corrente)
 vCalcInc_resistencia = np.vectorize(_calcInc_resistencia)
 
 
@@ -274,45 +248,51 @@ vAlgarismo_significativo = np.vectorize(algarismo_significativo)
 ###############################################################################
 #dedução de formulas de propagação de erro
 
-def propaga_incerteza(equacao, grandeza, variaveis):
-    #transforma as variaveis em simbolos do sympy
-    var = []
-    for i in variaveis:
-        var.append(sym.symbols(i))
+class propaga_incerteza:
+    '''Classe para incertezas propagadas'''
 
-    #transforma equacao de string em formato sympy
-    equacao = sym.parsing.sympy_parser.parse_expr(equacao)
+    def __init__(self, grandeza, formula, variaveis):
+        #transforma os parametros em objetos sympy
+        self.grandeza = sym.symbols(grandeza)
+        self.formula = sym.sympify(formula)
+        self.variaveis = sym.symbols(variaveis)
 
-    #acha as derivadas parciais da grandeza em relacao as variaveis
-    derivadas_parciais = []
-    for i in var:
-        derivadas_parciais.append(equacao.diff(i))
+        #calcula as derivadas parciais
+        self.parciais = [self.formula.diff(i) for i in self.variaveis]
 
-    #cria os simbolos para as incertezas das variaveis
-    incerteza_variaveis = []
-    for i in variaveis:
-        incerteza_variaveis.append(sym.symbols('\\sigma' + i))
+        #cria objetos sympy para as incertezas
+        inc_variaveis = sym.symbols(['\sigma_' + i for i in variaveis])
 
-    #multiplica a derivadas parciais pela incerteza e eleva ao quadrado
-    rep = []
-    for i, j in zip(incerteza_variaveis, derivadas_parciais):
-        rep.append((i * j)**2)
+        #calcula a formula do erro propagado
+        #calcula os termos da formula
+        termos = [(i * j)**2 for i, j in zip(inc_variaveis, self.parciais)]
 
-    #junta as representacoes quadraticas com soma e tira a raiz
-    incerteza_propagada = (sum(rep))**0.5
+        #soma os termos e tira a raiz
+        self.formula_incerteza = sum(termos)**0.5
 
-    #escreve em um arquivo as derivadas parciais
-    arquivo_latex = open('incertezas_propagadas/incerteza_propagada_' + grandeza, 'w')
-    for i, j in zip(variaveis, derivadas_parciais):
-        arquivo_latex.write(sym.latex(sym.Eq(
-            sym.symbols('\\frac{\\partial}{\\partial\ ' + i + '}' + grandeza), j)
-        ) + '\n')
+    def to_file(self, path):
+        '''Salva em arquivo .tex as derivadas parciais e a formula da incerteza propagada'''
 
-    #escreve no mesmo arquivo a incerteza propagada
-    arquivo_latex.write(sym.latex(sym.Eq(sym.symbols('\\sigma_' + grandeza), incerteza_propagada)))
-    arquivo_latex.close()
+        #transforma em latex as derivadas parciais e a formula da incerteza
+        latex_par = [sym.latex(i) for i in self.parciais]
+        latex_inc = sym.latex(self.formula_incerteza)
 
-    return incerteza_propagada
+        #strings e lista de strings auxiliares para a impressão
+        aux_parciais = ['\\frac{\\parcial ' + str(self.grandeza) + '}{\\parcial ' + str(i) + '} = ' + j for i, j in zip(self.variaveis, latex_par)]
+        aux_incerteza = '\\sigma_' + str(self.grandeza) + ' = ' + str(latex_inc)
+
+        #escreve arquivo
+        aux_arq = open(path, 'w')
+        aux_arq.write(
+'''Derivadas parciais:
+{}
+
+Equação da incerteza propagada:
+{}'''.format('\n'.join(aux_parciais), aux_incerteza)
+        )
+        aux_arq.close()
+
+
 
 def tabela_latex_quadriculada(df):
     #cabeçalho
