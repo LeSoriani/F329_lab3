@@ -73,7 +73,7 @@ def _incerteza_multimetro(medida, modo):
             resolucao = 10e-3
             calibracao = 1.2/100 * medida + 3*resolucao
 
-    elif(modo.lower() in ['resistencia', 'resistência', 'ohmimetro', 'ohmímetro'])
+    elif(modo.lower() in ['resistencia', 'resistência', 'ohmimetro', 'ohmímetro']):
         if(medida <= 600): #escala 600 ohms
             resolucao = 0.1
             calibracao = 0.8/100 * medida + 3*resolucao
