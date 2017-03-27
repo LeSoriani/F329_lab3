@@ -39,7 +39,7 @@ def _incerteza_multimetro(medida, modo):
     '''
 
     #a partir da escala determina a resolução e calibração
-    if(modo.lower in ['voltagem', 'tensão', 'potencial']):
+    if(modo.lower in ['voltagem', 'tensão', 'potencial', 'voltímetro', 'voltimetro']):
         if(medida <= 600e-3): #escala 600mV
             resolucao = 0.1e-3
             calibracao = 0.6/100 * medida + 2*resolucao
