@@ -300,7 +300,7 @@ class propaga_incerteza:
             {}
             '''.format('\n'.join(aux_parciais),
                        aux_incerteza
-                       ))
+                       )))
         aux_arq.close()
 
 
