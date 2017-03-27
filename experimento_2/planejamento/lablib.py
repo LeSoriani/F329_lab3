@@ -1,3 +1,6 @@
+#MEU PRIMEIRO GITHUB
+#CONFESSS
+
 #importa bibliotecas
 #default
 import numpy as np #vetores e matrizes
