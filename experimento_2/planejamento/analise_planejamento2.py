@@ -15,6 +15,7 @@ os.chdir(aux)
 #carrega a lablib
 import lablib as lab #funções pessoais de lab
 
+
 #importa dados
 df_termistor_raw = pd.read_csv('dados_coletados/termistor_raw.csv')
 
@@ -46,6 +47,39 @@ R_d_wheatstone = 66.0
 ###############################################################################
 #completando os dados
 
+#cria um data frame completo para o termistor
+df_termistor = pd.DataFrame(
+    data = { #colunas
+        'Temperatura [°C]' : df_termistor_raw['Temperatura [°C]'],
+        'Incerteza da temperatura [°C]' : lab.incerteza_triangular(
+            df_termistor_raw['Temperatura [°C]'],
+            a = 1
+            ),
+        'R_d [$\\Omega$]' : df_termistor_raw['R_d [$\\Omega$]'],
+        'Incerteza do R_d [$\\Omega$]' : lab.incerteza_retangular(
+            df_termistor_raw['R_d [$\\Omega$]'],
+            a = 1
+            ),
+        'Voltagem [V]' : df_termistor_raw['Voltagem [V]'],
+        'Incerteza da voltagem [V]' : lab.incerteza_voltimetro(
+            df_termistor_raw['Voltagem [V]']
+            ),
+        'Ohmimetro [$\\Omega$]' : df_termistor_raw['Ohmimetro [$\\Omega$]'],
+        'Incerteza do ohmimetro [$\\Omega$]' : lab.incerteza_ohmimetro(
+            df_termistor_raw['Ohmimetro [$\\Omega$]']
+            )
+    },
+    columns = [ #ordem das colunas
+        'Temperatura [°C]',
+        'Incerteza da temperatura [°C]',
+        'R_d [$\\Omega$]',
+        'Incerteza do R_d [$\\Omega$]',
+        'Voltagem [V]',
+        'Incerteza da voltagem [V]',
+        'Ohmimetro [$\\Omega$]',
+        'Incerteza do ohmimetro [$\\Omega$]'
+    ]
+)
 
 ###############################################################################
 #calculando valores importantes
