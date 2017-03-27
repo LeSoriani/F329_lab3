@@ -1,6 +1,3 @@
-#MEU PRIMEIRO GITHUB
-#CONFESSS
-
 #importa bibliotecas
 #default
 import numpy as np #vetores e matrizes
@@ -42,7 +39,7 @@ def _incerteza_multimetro(medida, modo):
     '''
 
     #a partir da escala determina a resolução e calibração
-    if(modo in ['voltagem', 'tensão', 'potencial']):
+    if(modo.lower in ['voltagem', 'tensão', 'potencial']):
         if(medida <= 600e-3): #escala 600mV
             resolucao = 0.1e-3
             calibracao = 0.6/100 * medida + 2*resolucao
@@ -59,7 +56,7 @@ def _incerteza_multimetro(medida, modo):
             resolucao = 1
             calibracao = 0.5/100 * medida + 3*resolucao
 
-    elif(modo in ['corrente', 'amperagem']):
+    elif(modo.lower in ['corrente', 'amperagem', 'amperímetro', 'amperimetro']):
         if(medida <= 600e-6): #escala 600microA
             resolucao = 0.1e-6
             calibracao = 0.5/100 * medida + 3*resolucao
@@ -76,6 +73,25 @@ def _incerteza_multimetro(medida, modo):
             resolucao = 10e-3
             calibracao = 1.2/100 * medida + 3*resolucao
 
+    elif(modo.lower() in ['resistencia', 'resistência', 'ohmimetro', 'ohmímetro'])
+        if(medida <= 600): #escala 600 ohms
+            resolucao = 0.1
+            calibracao = 0.8/100 * medida + 3*resolucao
+        elif(medida <= 6e3): #escala 6Kohms
+            resolucao = 0.001e3
+            calibracao = 0.5/100 * medida + 2*resolucao
+        elif(medida <= 60e3): #escala 60KOhms
+            resolucao = 0.01e3
+            calibracao = 0.5/100 * medida + 2*resolucao
+        elif(medida <= 600e3): #escala 600KOhms
+            resolucao = 0.1e3
+            calibracao = 0.5/100 * medida + 2*resolucao
+        elif(medida <= 6e6): #escala 6MOhms
+            resolucao = 0.001e6
+            calibracao = 0.8/100 * medida + 2*resolucao
+        elif(medida <= 60e6): #escala 60MOhms
+            resolucao = 0.01e6
+            calibracao = 1.2/100 * medida + 3*resolucao
 
     #supondo f.d.p retangular
     #calcula a incerteza da resolução e calibração
@@ -88,6 +104,19 @@ def _incerteza_multimetro(medida, modo):
 #vetoriza
 incerteza_multimetro = np.vectorize(_incerteza_multimetro)
 
+def incerteza_triangular(vetor_medida, a):
+    '''
+    Recebe vetor de medidas e retorna vetor do mesmo tamanho com incertezas associadas
+    por uma distribuição triangular.
+    '''
+    return np.repeat(a / (2 * 6**0.5), vetor_medida.shape[0])
+
+def incerteza_retangular(vetor_medida, a):
+    '''
+    Recebe vetor de medidas e retorna vetor do mesmo tamanho com incertezas associadas
+    por uma distribuição retangular.
+    '''
+    return np.repeat(a / (2 * 3**0.5), vetor_medida.shape[0])
 
 def _calcInc_resistencia(voltagem, corrente, d_voltagem, d_corrente):
     '''
