@@ -11,26 +11,6 @@ import scipy.odr #"mmq" melhorado
 from math import exp #funções matemáticas
 from textwrap import dedent #desindenta mult line string
 
-def _calcula_resistencia(voltagem, corrente):
-    '''
-    Desciçao:
-    - calcula a resistencia usando R = U/i
-
-    parametros:
-    - voltagem: valor da voltagem (volts)
-    - corrente: valor da corrente (amperes)
-
-    retorna:
-    - resistência (ohms)
-    '''
-    if(corrente == 0.0):
-        return np.nan
-    else:
-        return abs(voltagem / corrente)
-
-#vetoriza
-calcula_resistencia = np.vectorize(_calcula_resistencia)
-
 def _incerteza_voltimetro(medida):
     '''
     Calcula a incerteza na medição do múltimetro modo voltímetro.
@@ -144,30 +124,6 @@ def incerteza_retangular(vetor_medida, a):
     por uma distribuição retangular.
     '''
     return np.repeat(a / (2 * 3**0.5), vetor_medida.shape[0])
-
-
-def _calcInc_resistencia(voltagem, corrente, d_voltagem, d_corrente):
-    '''
-    Desciçao:
-    - calcula a incerteza da resistencia usando R = U/i
-
-    parametros:
-    - voltagem: valor da voltagem (volts)
-    - corrente: valor da corrente (amperes)
-    - d_voltagem: incerteza da voltagem (volts)
-    - d_corrente: incerteza da corrente (amperes)
-
-    retorna:
-    - incerteza da resistência (ohms)
-    '''
-
-    if(corrente == 0.0):
-        return np.nan
-    else:
-        return ((1/corrente**2 * d_voltagem**2) + (voltagem**2/corrente**4 * d_corrente**2))**0.5
-
-#vetoriza
-vCalcInc_resistencia = np.vectorize(_calcInc_resistencia)
 
 
 def _funcao_linear(P, x):
@@ -287,11 +243,14 @@ class propaga_incerteza:
 
         #escreve arquivo
         aux_arq = open(path, 'w')
-        aux_arq.write(dedent('''
+        aux_arq.write(dedent(
+            '''
             Derivadas parciais:
+
             {}
 
             Equação da incerteza propagada:
+
             {}
             '''.format('\n'.join(aux_parciais),
                        aux_incerteza
@@ -302,7 +261,8 @@ class propaga_incerteza:
 def tabela_latex(df):
     '''Transforma data frame em tabela formato latex'''
 
-    return dedent('''
+    return dedent(
+    '''
         \\def\\arraystretch{{1.2}}
         \\begin{{table}}[H]
             \\centering
