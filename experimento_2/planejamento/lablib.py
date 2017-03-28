@@ -1,12 +1,13 @@
 #importa bibliotecas
 #default
-import numpy as np #vetores e matrizes
-import pandas as pd #data frames (tabelas)
+import numpy as np #vetores
+import pandas as pd #data frames ("tabelas")
+import uncertainties.unumpy as unp #incertezas
 import scipy as sci #operações numéricas
 import sympy as sym #operação com expressões
 
 #adicionais
-import scipy.odr #"mmq" melhorado
+import scipy.odr #"mmq" melhoradol
 from math import log10, floor #importante para calcular a incerteza com apenas um algarismo significativo
 from textwrap import dedent #desindenta mult line string
 
@@ -111,86 +112,6 @@ def _incerteza_ohmimetro(medida):
 incerteza_voltimetro = np.vectorize(_incerteza_voltimetro)
 incerteza_amperimetro = np.vectorize(_incerteza_amperimetro)
 incerteza_ohmimetro = np.vectorize(_incerteza_ohmimetro)
-
-
-
-
-
-
-
-
-def _incerteza_multimetro(medida, modo):
-    '''
-    Calcula a incerteza de uma medida feito no multímetro.
-    Supõe corrente contínua.
-    Dados retirados do manual
-    '''
-
-    #a partir da escala determina a resolução e calibração
-    if(modo.lower() in ['voltagem', 'tensão', 'potencial', 'voltímetro', 'voltimetro']):
-        if(medida <= 600e-3): #escala 600mV
-            resolucao = 0.1e-3
-            calibracao = 0.6/100 * medida + 2*resolucao
-        elif(medida <= 6): #escala 6V
-            resolucao = 0.001
-            calibracao = 0.3/100 * medida + 2*resolucao
-        elif(medida <= 60): #escala 60V
-            resolucao = 0.01
-            calibracao = 0.3/100 * medida + 2*resolucao
-        elif(medida <= 600): #escala 600V
-            resolucao = 0.1
-            calibracao = 0.3/100 * medida + 2*resolucao
-        elif(medida <= 1000): #escala 1000V
-            resolucao = 1
-            calibracao = 0.5/100 * medida + 3*resolucao
-
-    elif(modo.lower() in ['corrente', 'amperagem', 'amperímetro', 'amperimetro']):
-        if(medida <= 600e-6): #escala 600microA
-            resolucao = 0.1e-6
-            calibracao = 0.5/100 * medida + 3*resolucao
-        elif(medida <= 6000e-6): #escala 6000microA
-            resolucao = 1e-6
-            calibracao = 0.5/100 * medida + 3*resolucao
-        elif(medida <= 60e-3): #escala 60mA
-            resolucao = 0.01e-3
-            calibracao = 0.5/100 * medida + 3*resolucao
-        elif(medida <= 600e-3): #escala 600mA
-            resolucao = 0.1e-3
-            calibracao = 0.8/100 * medida + 3*resolucao
-        elif(medida <= 10): #escala 10A
-            resolucao = 10e-3
-            calibracao = 1.2/100 * medida + 3*resolucao
-
-    elif(modo.lower() in ['resistencia', 'resistência', 'ohmimetro', 'ohmímetro']):
-        if(medida <= 600): #escala 600 ohms
-            resolucao = 0.1
-            calibracao = 0.8/100 * medida + 3*resolucao
-        elif(medida <= 6e3): #escala 6Kohms
-            resolucao = 0.001e3
-            calibracao = 0.5/100 * medida + 2*resolucao
-        elif(medida <= 60e3): #escala 60KOhms
-            resolucao = 0.01e3
-            calibracao = 0.5/100 * medida + 2*resolucao
-        elif(medida <= 600e3): #escala 600KOhms
-            resolucao = 0.1e3
-            calibracao = 0.5/100 * medida + 2*resolucao
-        elif(medida <= 6e6): #escala 6MOhms
-            resolucao = 0.001e6
-            calibracao = 0.8/100 * medida + 2*resolucao
-        elif(medida <= 60e6): #escala 60MOhms
-            resolucao = 0.01e6
-            calibracao = 1.2/100 * medida + 3*resolucao
-
-    #supondo f.d.p retangular
-    #calcula a incerteza da resolução e calibração
-    inc_resolucao = resolucao / (2 * 3**0.5)
-    inc_calibracao = 2 * calibracao / (2 * 3**0.5)
-
-    #calcula a incerteza total a partir da soma dos quadrados das incertezas
-    return (inc_resolucao**2 + inc_calibracao**2)**0.5
-
-#vetoriza
-incerteza_multimetro = np.vectorize(_incerteza_multimetro)
 
 def incerteza_triangular(vetor_medida, a):
     '''
@@ -311,67 +232,6 @@ def odr_linear(x, y, dx, dy):
 
     #retorna o data frame dos coeficientes
     return df_coeficientes
-
-
-def _calc_resistencia_minima(voltagem, d_corrente):
-    return abs(voltagem / d_corrente)
-
-#vetoriza
-vCalc_resistencia_minima = np.vectorize(_calc_resistencia_minima)
-
-
-class notacao_cientifica():
-    '''Classe para formatação dos valores +/- incerteza em notação cientifica'''
-
-    def __init__(self, valor, incerteza):
-        self.expoente = floor(log10(incerteza))
-        self.incerteza = round(incerteza, -self.expoente)
-        self.valor = round(valor, -self.expoente)
-
-    def __repr__(self):
-        return '({} +/- {}) * 10**({})'.format(self.valor / self.expoente,
-                                             self.incerteza / self.expoente,
-                                             self.expoente)
-    def __str__(self):
-        return '({} +/- {}) * 10**({})'.format(self.valor / self.expoente,
-                                             self.incerteza / self.expoente,
-                                             self.expoente)
-    def latex(self):
-        return '$({} \\pm {}) \\cdot 10^{{{}}}$'.format(self.valor / self.expoente,
-                                             self.incerteza / self.expoente,
-                                             self.expoente)
-
-class vNotacao_cientifica():
-    '''Classe para formatação de vetores valores +/- incerteza em notação cientifica'''
-
-    def __init__(self, valor, incerteza):
-        valor = np.array(valor)
-        incerteza = np.array(incerteza)
-
-        self.expoente = np.floor(np.log10(incerteza)).astype(int)
-        self.incerteza = np.array([round(i, -j) for i, j in zip(incerteza, self.expoente)])
-        self.valor = np.array([round(i, -j) for i, j in zip(valor, self.expoente)])
-
-    def __repr__(self):
-        return '\n'.join([
-            '({} +/- {}) * 10**({})'.format(i / k, j / k, k) for i, j, k in zip(self.valor,
-                                                                                self.incerteza,
-                                                                                self.expoente)
-        ])
-
-    def __str__(self):
-        return '\n'.join([
-            '({} +/- {}) * 10**({})'.format(i / k, j / k, k) for i, j, k in zip(self.valor,
-                                                                                self.incerteza,
-                                                                                self.expoente)
-        ])
-
-    def latex(self):
-        return [
-            '$({} \\pm {}) \\cdot 10^{{{}}}$'.format(i / k, j / k, k) for i, j, k in zip(self.valor,
-                                                                                self.incerteza,
-                                                                                self.expoente)
-        ]
 
 
 class propaga_incerteza:

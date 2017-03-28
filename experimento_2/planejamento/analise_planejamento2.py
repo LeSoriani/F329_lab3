@@ -6,15 +6,19 @@ import os #funções do OS
 import numpy as np #vetores
 import pandas as pd #data frames
 import matplotlib.pyplot as plt #plots
+import uncertainties.unumpy as unp
 
 #seta o workdirectory como o diretório do script
+#from inspect import getsourcefile
+#from os.path import abspath
+#abspath(getsourcefile(lambda:0))
 aux = os.path.expanduser('~/MEGA/Unicamp/3° Semestre/F329_lab3/experimento_2/planejamento')
 #aux = os.path.expanduser('/Users/LeoBianco/Documents/git/F329_lab3/experimento_2/planejamento')
 os.chdir(aux)
 
 #carrega a lablib
 import lablib as lab #funções pessoais de lab
-
+#%%
 
 #importa dados
 df_termistor_raw = pd.read_csv('dados_coletados/termistor_raw.csv')
@@ -38,11 +42,15 @@ R_p_ohmimetro = 99.0
 
 #resistência de década R_d
 R_d_wheatstone = 66.0
-
-
+#%%
 
 #define funções
 
+#retorna um vetor string-latex de uncertainties com apenas um algarismo signficativo
+alg_sig = np.vectorize(lambda x: '${:.1u}$'.format(x).replace('+/-', ' \pm '))
+
+
+#%%
 
 ###############################################################################
 #completando os dados
@@ -80,18 +88,72 @@ df_termistor = pd.DataFrame(
         'Incerteza do ohmimetro [$\\Omega$]'
     ]
 )
+#%%
 
 ###############################################################################
 #calculando valores importantes
 
+#%%
 
 ###############################################################################
 #plot de gráficos
 
+#grafico R_d X temperatura
+#grafico Ohmimetro x R_d
+#%%
 
 ###############################################################################
 #salvando tabelas formato latex
 
+#junta os valores com as incertezas em um data frame
+df_termistor_unc = pd.DataFrame(
+    data = { #colunas
+        'Temperatura [°C]' : unp.uarray(
+                df_termistor['Temperatura [°C]'],
+                df_termistor['Incerteza da temperatura [°C]']
+                ),
+        'R_d [$\\Omega$]' : unp.uarray(
+                df_termistor['R_d [$\\Omega$]'],
+                df_termistor['Incerteza do R_d [$\\Omega$]']
+                ),
+        'Voltagem [V]' : unp.uarray(
+                df_termistor['Voltagem [V]'],
+                df_termistor['Incerteza da voltagem [V]']
+                ),
+        'Ohmimetro [$\\Omega$]' : unp.uarray(
+                df_termistor['Ohmimetro [$\\Omega$]'],
+                df_termistor['Incerteza do ohmimetro [$\\Omega$]']
+                ),
+    },
+    columns = [ #ordem das colunas
+        'Temperatura [°C]',
+        'R_d [$\\Omega$]',
+        'Voltagem [V]',
+        'Ohmimetro [$\\Omega$]',
+    ]
+)
+ 
+#representa os valalores com as incertezas em string-latex e salva em um data frame
+df_termistor_latex = pd.DataFrame(
+    data = { #colunas
+        'Temperatura [°C]' : alg_sig(df_termistor_unc['Temperatura [°C]']),
+        'R_d [$\\Omega$]' : alg_sig(df_termistor_unc['R_d [$\\Omega$]']),
+        'Voltagem [V]' : alg_sig(df_termistor_unc['Voltagem [V]']),
+        'Ohmimetro [$\\Omega$]' : alg_sig(df_termistor_unc['Ohmimetro [$\\Omega$]'])
+    },
+    columns = [ #ordem das colunas
+        'Temperatura [°C]',
+        'R_d [$\\Omega$]',
+        'Voltagem [V]',
+        'Ohmimetro [$\\Omega$]',
+    ]
+)
+
+#salva a tabela em formato latex em um arquivo
+arq_termistor_latex = open('termistor.tex', 'w')
+arq_termistor_latex.write(lab.tabela_latex(df_termistor_latex))
+arq_termistor_latex.close()
+#%%
 
 ###############################################################################
 #salvando dados importantes em latex
