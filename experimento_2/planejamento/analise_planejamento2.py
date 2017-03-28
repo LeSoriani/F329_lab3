@@ -150,7 +150,7 @@ df_termistor_latex = pd.DataFrame(
 )
 
 #salva a tabela em formato latex em um arquivo
-arq_termistor_latex = open('termistor.tex', 'w')
+arq_termistor_latex = open('latex/tabelas/termistor.tex', 'w')
 arq_termistor_latex.write(lab.tabela_latex(df_termistor_latex))
 arq_termistor_latex.close()
 #%%

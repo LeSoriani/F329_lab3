@@ -92,10 +92,10 @@ def _incerteza_amperimetro(medida):
     return (inc_resolucao**2 + inc_calibracao**2)**0.5
 
 def _incerteza_ohmimetro(medida):
-        '''
-        Calcula a incerteza na medição do múltimetro modo ohmímetro.
-        Dados retirados do manual
-        '''
+    '''
+    Calcula a incerteza na medição do múltimetro modo ohmímetro.
+    Dados retirados do manual
+    '''
 
     if(medida <= 600): #escala 600 ohms
         resolucao = 0.1
