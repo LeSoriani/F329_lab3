@@ -18,8 +18,8 @@ os.chdir(aux)
 
 #carrega a lablib
 import lablib as lab #funções pessoais de lab
-#%%
 
+#%%
 #importa dados
 df_termistor_raw = pd.read_csv('dados_coletados/termistor_raw.csv')
 
@@ -42,8 +42,8 @@ R_p_ohmimetro = 99.0
 
 #resistência de década R_d
 R_d_wheatstone = 66.0
-#%%
 
+#%%
 #define funções
 
 #retorna um vetor string-latex de uncertainties com apenas um algarismo signficativo
@@ -51,7 +51,6 @@ alg_sig = np.vectorize(lambda x: '${:.1u}$'.format(x).replace('+/-', ' \pm '))
 
 
 #%%
-
 ###############################################################################
 #completando os dados
 
@@ -88,20 +87,20 @@ df_termistor = pd.DataFrame(
         'Incerteza do ohmimetro [$\\Omega$]'
     ]
 )
+    
 #%%
-
 ###############################################################################
 #calculando valores importantes
 
-#%%
 
+#%%
 ###############################################################################
 #plot de gráficos
 
 #grafico R_d X temperatura
 #grafico Ohmimetro x R_d
-#%%
 
+#%%
 ###############################################################################
 #salvando tabelas formato latex
 
@@ -153,11 +152,11 @@ df_termistor_latex = pd.DataFrame(
 arq_termistor_latex = open('latex/tabelas/termistor.tex', 'w')
 arq_termistor_latex.write(lab.tabela_latex(df_termistor_latex))
 arq_termistor_latex.close()
-#%%
 
+#%%
 ###############################################################################
 #salvando dados importantes em latex
 
-
+#%%
 ###############################################################################
 #salvando formulas de incertezas propagadas em latex
