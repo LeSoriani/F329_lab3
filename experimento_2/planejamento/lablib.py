@@ -7,8 +7,8 @@ import scipy as sci #operações numéricas
 import sympy as sym #operação com expressões
 
 #adicionais
-import scipy.odr #"mmq" melhoradol
-from math import log10, floor #importante para calcular a incerteza com apenas um algarismo significativo
+import scipy.odr #"mmq" melhorado
+from math import exp #funções matemáticas
 from textwrap import dedent #desindenta mult line string
 
 def _calcula_resistencia(voltagem, corrente):
@@ -32,6 +32,11 @@ def _calcula_resistencia(voltagem, corrente):
 calcula_resistencia = np.vectorize(_calcula_resistencia)
 
 def _incerteza_voltimetro(medida):
+    '''
+    Calcula a incerteza na medição do múltimetro modo voltímetro.
+    Dados retirados do manual
+    '''
+
     if(medida <= 600e-3): #escala 600mV
         resolucao = 0.1e-3
         calibracao = 0.6/100 * medida + 2*resolucao
@@ -57,6 +62,11 @@ def _incerteza_voltimetro(medida):
     return (inc_resolucao**2 + inc_calibracao**2)**0.5
 
 def _incerteza_amperimetro(medida):
+    '''
+    Calcula a incerteza na medição do múltimetro modo amperímetro.
+    Dados retirados do manual
+    '''
+
     if(medida <= 600e-6): #escala 600microA
         resolucao = 0.1e-6
         calibracao = 0.5/100 * medida + 3*resolucao
@@ -82,6 +92,11 @@ def _incerteza_amperimetro(medida):
     return (inc_resolucao**2 + inc_calibracao**2)**0.5
 
 def _incerteza_ohmimetro(medida):
+        '''
+        Calcula a incerteza na medição do múltimetro modo ohmímetro.
+        Dados retirados do manual
+        '''
+
     if(medida <= 600): #escala 600 ohms
         resolucao = 0.1
         calibracao = 0.8/100 * medida + 3*resolucao
@@ -109,9 +124,11 @@ def _incerteza_ohmimetro(medida):
     #calcula a incerteza total a partir da soma dos quadrados das incertezas
     return (inc_resolucao**2 + inc_calibracao**2)**0.5
 
+#vetoriza
 incerteza_voltimetro = np.vectorize(_incerteza_voltimetro)
 incerteza_amperimetro = np.vectorize(_incerteza_amperimetro)
 incerteza_ohmimetro = np.vectorize(_incerteza_ohmimetro)
+
 
 def incerteza_triangular(vetor_medida, a):
     '''
@@ -120,12 +137,14 @@ def incerteza_triangular(vetor_medida, a):
     '''
     return np.repeat(a / (2 * 6**0.5), vetor_medida.shape[0])
 
+
 def incerteza_retangular(vetor_medida, a):
     '''
     Recebe vetor de medidas e retorna vetor do mesmo tamanho com incertezas associadas
     por uma distribuição retangular.
     '''
     return np.repeat(a / (2 * 3**0.5), vetor_medida.shape[0])
+
 
 def _calcInc_resistencia(voltagem, corrente, d_voltagem, d_corrente):
     '''
@@ -146,7 +165,6 @@ def _calcInc_resistencia(voltagem, corrente, d_voltagem, d_corrente):
         return np.nan
     else:
         return ((1/corrente**2 * d_voltagem**2) + (voltagem**2/corrente**4 * d_corrente**2))**0.5
-
 
 #vetoriza
 vCalcInc_resistencia = np.vectorize(_calcInc_resistencia)
