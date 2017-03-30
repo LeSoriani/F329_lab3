@@ -4,7 +4,7 @@
 
 1. ( )(Lêticia) Para a montagem da Figura 1 do roteiro de coleta de dados, mostre que, quando a ponte está equilibrada (V=0), R1×Rd = R2×Rx
 
-2. (Giuseppe)(Giuseppe) A partir dos valores medidos (com ohmímetro) e do valor de Rd para V=0, calcule, com a devida propagação de erros, um valor para Rx
+2. (FEITO)(Giuseppe) A partir dos valores medidos (com ohmímetro) e do valor de Rd para V=0, calcule, com a devida propagação de erros, um valor para Rx
 
 ## Parte II:
 
