@@ -81,6 +81,12 @@ def inc_resistencia_termistor(R_1, R_2, R_d, dR_1, dR_2, dR_d):
 #retorna um vetor string-latex de uncertainties com apenas um algarismo signficativo
 alg_sig = np.vectorize(lambda x: '${:.1u}$'.format(x).replace('+/-', ' \pm '))
 
+def leo_valor(series):
+    return series.apply(lambda x: x.nominal_value)
+
+def leo_inc(series):
+    return series.apply(lambda x: x.std_dev)
+
 
 #%%
 ###############################################################################
