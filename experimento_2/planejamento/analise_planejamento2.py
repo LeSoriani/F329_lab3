@@ -2,11 +2,16 @@
 #fazendo preparativos
 
 #importa bibliotecas
+#principais
 import os #funções do OS
 import numpy as np #vetores
 import pandas as pd #data frames
 import matplotlib.pyplot as plt #plots
+import uncertainties as unc
 import uncertainties.unumpy as unp #incertezas
+
+#adicionais
+from textwrap import dedent #retira identação de string multilinea
 
 #seta o workdirectory como o diretório do script
 aux = os.path.expanduser('~/MEGA/Unicamp/3° Semestre/F329_lab3/experimento_2/planejamento')
@@ -23,28 +28,38 @@ df_termistor_raw = pd.read_csv('dados_coletados/termistor_raw.csv')
 #anota valores (Ohms)
 #resitencia avaliada
 R_x_nominal = 68
-R_x_ohmimetro = 66.8
-dR_x_ohmimetro = lab.incerteza_ohmimetro(66.8)
+R_x_ohmimetro = unc.ufloat(
+        66.8,
+        lab.incerteza_ohmimetro(66.8)
+        )
 
 #resistência R_1 (vermelha)
 R_1_nominal = 100
-R_1_ohmimetro = 100.0
-dR_1_ohmimetro = lab.incerteza_ohmimetro(100.0)
+R_1_ohmimetro = unc.ufloat(
+        100.0,
+        lab.incerteza_ohmimetro(100.0)
+        )
 
 #resistência R_2 (bege)
 R_2_nominal = 100
-R_2_ohmimetro = 100.7
-dR_2_ohmimetro = lab.incerteza_ohmimetro(100.7)
+R_2_ohmimetro = unc.ufloat(
+        100.7,
+        lab.incerteza_ohmimetro(100.7)
+        )
 
 #resistência de proteção R_p (amarela)
 R_p_nominal = 100
-R_p_ohmimetro = 99.0
-dR_p_ohmimetro = lab.incerteza_ohmimetro(99.0)
+R_p_ohmimetro = unc.ufloat(
+        99.0,
+        lab.incerteza_ohmimetro(99.0)
+        )
 
 #resistência de década R_d
-R_d_wheatstone = 66.0
-dR_d_wheatstone = lab.incerteza_ohmimetro(66.0)
-#calcular a incerteza dessa porra, nem sei como
+#supondo que a incerteza é apenas a do ohmímetro
+R_d_wheatstone = unc.ufloat(
+        66.0,
+        lab.incerteza_ohmimetro(66.0)
+        )
 
 #%%
 #define funções
@@ -110,28 +125,23 @@ df_termistor = pd.DataFrame(
                ]
         )
 
-#calcula a resistencia do termistor e sua incerteza
-df_termistor['Resistência do termistor [$\\Omega$]'] = pd.Series(
-        unp.uarray(
-                calc_resistencia_termistor(#valor da resistência do termistor
-                        R_1_ohmimetro,
-                        R_2_ohmimetro,
-                        df_termistor_raw['Resistência de decada [$\\Omega$]']
-                        ),
-                inc_resistencia_termistor(#incerteza da resistencia do termistor
-                        R_1_ohmimetro,
-                        R_2_ohmimetro,
-                        df_termistor_raw['Resistência de decada [$\\Omega$]'],
-                        dR_1_ohmimetro,
-                        dR_2_ohmimetro,
-                        lab.incerteza_retangular(#incerteza da resistencia de decada
-                                                 #necessário para a propagação de incerteza
-                                df_termistor_raw['Resistência de decada [$\Omega$]'],
-                                a = 1
-                                )
-                        )
-                )
+
+res_decada = unp.uarray(
+        df_termistor_raw['Resistência de decada [$\\Omega$]'],
+        lab.incerteza_retangular(#incerteza da resistencia de decada
+                                 #necessário para a propagação de incerteza
+                                 df_termistor_raw['Resistência de decada [$\Omega$]'],
+                                 a = 1
+                                 )
         )
+
+
+#calcula a resistencia do termistor e sua incerteza com o pacote uncertainties
+df_termistor['Resistência do termistor [$\\Omega$]'] = calc_resistencia_termistor(#valor da resistência do termistor
+            R_1_ohmimetro,
+            R_2_ohmimetro,
+            res_decada
+            )
 
 
 #dataframe necessario para a linearização
@@ -151,22 +161,12 @@ df_termistor_linearizado = pd.DataFrame(
 ###############################################################################
 #calculando valores importantes
 
-#calcula resistência desconhecida R_x
+#calcula resistência e sua incerteza de R_x
+#talvez tenha que levar em conta o valor da voltagem na ponte de wheatstone
 R_x = calc_resistencia_termistor(
         R_1_ohmimetro,
         R_2_ohmimetro,
         R_d_wheatstone
-        )
-
-#calcula incerteza da resistência desconhecida R_x
-#talvez tenha que levar em conta o valor da voltagem na ponte de wheatstone
-dR_x =  inc_resistencia_termistor(
-        R_1_ohmimetro,
-        R_2_ohmimetro,
-        R_d_wheatstone,
-        dR_1_ohmimetro,
-        dR_2_ohmimetro,
-        dR_d_wheatstone        
         )
 
 #%%
@@ -203,6 +203,17 @@ arq_termistor_latex.close()
 #%%
 ###############################################################################
 #salvando dados importantes em latex
+
+arq_R_x = open('latex/outros/resistencia_R_x', 'w')
+arq_R_x.write(dedent(
+        '''
+        Resistência de R_x determinada usando o método da ponto de Wheatstone:
+        ${:.1u} \Omega$
+        '''.format(R_x).replace('+/-', ' \pm ')
+        )
+    )
+arq_R_x.close()
+
 
 #%%
 ###############################################################################
