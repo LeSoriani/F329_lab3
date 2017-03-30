@@ -43,6 +43,7 @@ dR_p_ohmimetro = lab.incerteza_ohmimetro(99.0)
 
 #resistência de década R_d
 R_d_wheatstone = 66.0
+dR_d_wheatstone = lab.incerteza_ohmimetro(66.0)
 #calcular a incerteza dessa porra, nem sei como
 
 #%%
@@ -66,63 +67,104 @@ alg_sig = np.vectorize(lambda x: '${:.1u}$'.format(x).replace('+/-', ' \pm '))
 #%%
 ###############################################################################
 #completando os dados
-
-#cria um data frame completo para o termistor
+    
+#cria dataframe geral do termistor
+#junta os valores com as incertezas em um data frame
 df_termistor = pd.DataFrame(
-    data = { #colunas
-        'Temperatura [°C]' : df_termistor_raw['Temperatura [°C]'],
-        'Incerteza da temperatura [°C]' : lab.incerteza_triangular(
-                df_termistor_raw['Temperatura [°C]'],
-                a = 1
-                ),
-        'Resistência de decada [$\Omega$]' : df_termistor_raw['Resistência de decada [$\Omega$]'],
-        'Incerteza da Resistência de decada [$\Omega$]' : lab.incerteza_retangular(
-                df_termistor_raw['Resistência de decada [$\Omega$]'],
-                a = 1
-                ),
-        'Voltagem [V]' : df_termistor_raw['Voltagem [V]'],
-        'Incerteza da voltagem [V]' : lab.incerteza_voltimetro(
-                df_termistor_raw['Voltagem [V]']
-                ),
-        'Ohmimetro [$\\Omega$]' : df_termistor_raw['Ohmimetro [$\\Omega$]'],
-        'Incerteza do ohmimetro [$\\Omega$]' : lab.incerteza_ohmimetro(
-                df_termistor_raw['Ohmimetro [$\\Omega$]']
-                ),
-        'Resistência do termistor [$\\Omega$]' : calc_resistencia_termistor(
-                R_1_ohmimetro,
-                R_2_ohmimetro,
-                df_termistor_raw['Resistência de decada [$\\Omega$]']
-                ),
-        'Incerteza da resistência do termistor [$\\Omega$]' : inc_resistencia_termistor(
-                R_1_ohmimetro,
-                R_2_ohmimetro,
-                df_termistor_raw['Resistência de decada [$\\Omega$]'],
-                dR_1_ohmimetro,
-                dR_2_ohmimetro,
-                lab.incerteza_retangular(
+        data = { #colunas
+                'Temperatura [°C]' : unp.uarray(
+                        df_termistor_raw['Temperatura [°C]'],
+                        lab.incerteza_triangular(
+                                df_termistor_raw['Temperatura [°C]'],
+                                a = 1
+                                )
+                        ),
+                'Resistência de decada [$\Omega$]' : unp.uarray(
                         df_termistor_raw['Resistência de decada [$\Omega$]'],
-                        a = 1
+                        lab.incerteza_retangular(
+                                df_termistor_raw['Resistência de decada [$\Omega$]'],
+                                a = 1
+                                )
+                        ),
+                'Voltagem [V]' : unp.uarray(
+                        df_termistor_raw['Voltagem [V]'],
+                        lab.incerteza_voltimetro(
+                                df_termistor_raw['Voltagem [V]']
+                                )
+                        ),
+                'Ohmimetro [$\\Omega$]' : unp.uarray(
+                        df_termistor_raw['Ohmimetro [$\\Omega$]'],
+                        lab.incerteza_ohmimetro(
+                                df_termistor_raw['Ohmimetro [$\\Omega$]']
+                                )
+                        )
+                },
+    columns = [ #ordem das colunas
+               'Temperatura [°C]',
+               'Resistência de decada [$\Omega$]',
+               'Voltagem [V]',
+               'Ohmimetro [$\\Omega$]'
+               ]
+        )
+
+#calcula a resistencia do termistor e sua incerteza
+df_termistor['Resistência do termistor [$\\Omega$]'] = pd.Series(
+        unp.uarray(
+                calc_resistencia_termistor(#valor da resistência do termistor
+                        R_1_ohmimetro,
+                        R_2_ohmimetro,
+                        df_termistor_raw['Resistência de decada [$\\Omega$]']
+                        ),
+                inc_resistencia_termistor(#incerteza da resistencia do termistor
+                        R_1_ohmimetro,
+                        R_2_ohmimetro,
+                        df_termistor_raw['Resistência de decada [$\\Omega$]'],
+                        dR_1_ohmimetro,
+                        dR_2_ohmimetro,
+                        lab.incerteza_retangular(#incerteza da resistencia de decada
+                                                 #necessário para a propagação de incerteza
+                                df_termistor_raw['Resistência de decada [$\Omega$]'],
+                                a = 1
+                                )
                         )
                 )
-    },
-    columns = [ #ordem das colunas
-        'Temperatura [°C]',
-        'Incerteza da temperatura [°C]',
-        'Resistência de decada [$\Omega$]',
-        'Incerteza da Resistência de decada [$\Omega$]',
-        'Voltagem [V]',
-        'Incerteza da voltagem [V]',
-        'Ohmimetro [$\\Omega$]',
-        'Incerteza do ohmimetro [$\\Omega$]',
-        'Resistência do termistor [$\\Omega$]',
-        'Incerteza da resistência do termistor [$\\Omega$]'
-    ]
-)
-    
+        )
+
+
+#dataframe necessario para a linearização
+df_termistor_linearizado = pd.DataFrame(
+        data = {#colunas
+                '1/T [°C]' : 1 / df_termistor['Temperatura [°C]'],
+                'RTNC [$\\Omega$]' : df_termistor['Resistência do termistor [$\\Omega$]'],#resistência do termistor ou da decada?
+                'ln(RTNC) [$\\Omega$]' : unp.log(df_termistor['Resistência do termistor [$\\Omega$]'])
+                },
+        columns = [ #ordem das colunas
+                '1/T [°C]',
+                'RTNC [$\\Omega$]',
+                'ln(RTNC) [$\\Omega$]'
+                ]
+        )
 #%%
 ###############################################################################
 #calculando valores importantes
 
+#calcula resistência desconhecida R_x
+R_x = calc_resistencia_termistor(
+        R_1_ohmimetro,
+        R_2_ohmimetro,
+        R_d_wheatstone
+        )
+
+#calcula incerteza da resistência desconhecida R_x
+#talvez tenha que levar em conta o valor da voltagem na ponte de wheatstone
+dR_x =  inc_resistencia_termistor(
+        R_1_ohmimetro,
+        R_2_ohmimetro,
+        R_d_wheatstone,
+        dR_1_ohmimetro,
+        dR_2_ohmimetro,
+        dR_d_wheatstone        
+        )
 
 #%%
 ###############################################################################
@@ -134,48 +176,15 @@ df_termistor = pd.DataFrame(
 #%%
 ###############################################################################
 #salvando tabelas formato latex
-
-#junta os valores com as incertezas em um data frame
-df_termistor_unc = pd.DataFrame(
-    data = { #colunas
-        'Temperatura [°C]' : unp.uarray(
-                df_termistor['Temperatura [°C]'],
-                df_termistor['Incerteza da temperatura [°C]']
-                ),
-        'Resistência de decada [$\Omega$]' : unp.uarray(
-                df_termistor['Resistência de decada [$\Omega$]'],
-                df_termistor['Incerteza da Resistência de decada [$\Omega$]']
-                ),
-        'Voltagem [V]' : unp.uarray(
-                df_termistor['Voltagem [V]'],
-                df_termistor['Incerteza da voltagem [V]']
-                ),
-        'Ohmimetro [$\\Omega$]' : unp.uarray(
-                df_termistor['Ohmimetro [$\\Omega$]'],
-                df_termistor['Incerteza do ohmimetro [$\\Omega$]']
-                ),
-        'Resistência do termistor [$\\Omega$]' : unp.uarray(
-                df_termistor['Resistência do termistor [$\\Omega$]'],
-                df_termistor['Incerteza da resistência do termistor [$\\Omega$]']
-                )
-    },
-    columns = [ #ordem das colunas
-        'Temperatura [°C]',
-        'Resistência de decada [$\Omega$]',
-        'Voltagem [V]',
-        'Ohmimetro [$\\Omega$]',
-        'Resistência do termistor [$\\Omega$]'
-    ]
-)
  
 #representa os valalores com as incertezas em string-latex e salva em um data frame
 df_termistor_latex = pd.DataFrame(
     data = { #colunas
-        'Temperatura [°C]' : alg_sig(df_termistor_unc['Temperatura [°C]']),
-        'Resistência de decada [$\Omega$]' : alg_sig(df_termistor_unc['Resistência de decada [$\Omega$]']),
-        'Voltagem [V]' : alg_sig(df_termistor_unc['Voltagem [V]']),
-        'Ohmimetro [$\\Omega$]' : alg_sig(df_termistor_unc['Ohmimetro [$\\Omega$]']),
-        'Resistência do termistor [$\\Omega$]' : alg_sig(df_termistor_unc['Resistência do termistor [$\Omega$]'])
+        'Temperatura [°C]' : alg_sig(df_termistor['Temperatura [°C]']),
+        'Resistência de decada [$\Omega$]' : alg_sig(df_termistor['Resistência de decada [$\Omega$]']),
+        'Voltagem [V]' : alg_sig(df_termistor['Voltagem [V]']),
+        'Ohmimetro [$\\Omega$]' : alg_sig(df_termistor['Ohmimetro [$\\Omega$]']),
+        'Resistência do termistor [$\\Omega$]' : alg_sig(df_termistor['Resistência do termistor [$\Omega$]'])
     },
     columns = [ #ordem das colunas
         'Temperatura [°C]',
