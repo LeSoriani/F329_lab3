@@ -49,6 +49,9 @@ dR_d_wheatstone = lab.incerteza_ohmimetro(66.0)
 #%%
 #define funções
 
+def to_kelvin(temperatura):
+    return temperatura + 273.15
+
 #calcula resistência do termistor
 def calc_resistencia_termistor(R_1, R_2, R_d):
     return R_1/R_2 * R_d
@@ -134,14 +137,14 @@ df_termistor['Resistência do termistor [$\\Omega$]'] = pd.Series(
 #dataframe necessario para a linearização
 df_termistor_linearizado = pd.DataFrame(
         data = {#colunas
-                '1/T [°C]' : 1 / df_termistor['Temperatura [°C]'],
-                'RTNC [$\\Omega$]' : df_termistor['Resistência do termistor [$\\Omega$]'],#resistência do termistor ou da decada?
-                'ln(RTNC) [$\\Omega$]' : unp.log(df_termistor['Resistência do termistor [$\\Omega$]'])
+                '1/T [K]' : 1 / (df_termistor['Temperatura [°C]'] + 273.15), #transforma em kelvin antes de inverter
+                'RNTC [$\\Omega$]' : df_termistor['Resistência do termistor [$\\Omega$]'],#resistência do termistor ou da decada?
+                'ln(RNTC) [$\\Omega$]' : unp.log(df_termistor['Resistência do termistor [$\\Omega$]'])
                 },
         columns = [ #ordem das colunas
-                '1/T [°C]',
-                'RTNC [$\\Omega$]',
-                'ln(RTNC) [$\\Omega$]'
+                '1/T [K]',
+                'RNTC [$\\Omega$]',
+                'ln(RNTC) [$\\Omega$]'
                 ]
         )
 #%%
@@ -170,8 +173,9 @@ dR_x =  inc_resistencia_termistor(
 ###############################################################################
 #plot de gráficos
 
-#grafico R_d X temperatura
-#grafico Ohmimetro x R_d
+#calcular coeficientes da reta
+#grafico ln(RNTC) x 1/T
+#grafico RNTC x 1/T com curva exponencial
 
 #%%
 ###############################################################################
@@ -179,24 +183,20 @@ dR_x =  inc_resistencia_termistor(
  
 #representa os valalores com as incertezas em string-latex e salva em um data frame
 df_termistor_latex = pd.DataFrame(
-    data = { #colunas
-        'Temperatura [°C]' : alg_sig(df_termistor['Temperatura [°C]']),
-        'Resistência de decada [$\Omega$]' : alg_sig(df_termistor['Resistência de decada [$\Omega$]']),
-        'Voltagem [V]' : alg_sig(df_termistor['Voltagem [V]']),
-        'Ohmimetro [$\\Omega$]' : alg_sig(df_termistor['Ohmimetro [$\\Omega$]']),
-        'Resistência do termistor [$\\Omega$]' : alg_sig(df_termistor['Resistência do termistor [$\Omega$]'])
-    },
-    columns = [ #ordem das colunas
-        'Temperatura [°C]',
-        'Resistência de decada [$\Omega$]',
-        'Voltagem [V]',
-        'Ohmimetro [$\\Omega$]',
-        'Resistência do termistor [$\\Omega$]'
-    ]
-)
+        data = { #colunas
+                '1/T [K]' : alg_sig(df_termistor_linearizado['1/T [K]']),
+                'RNTC [$\\Omega$]' : alg_sig(df_termistor_linearizado['RNTC [$\\Omega$]']),
+                'ln(RNTC) [$\\Omega$]' : alg_sig(df_termistor_linearizado['ln(RNTC) [$\\Omega$]'])
+                },
+        columns = [ #ordem das colunas
+                   '1/T [K]',
+                   'RNTC [$\\Omega$]',
+                   'ln(RNTC) [$\\Omega$]'
+                   ]
+        )
 
-#salva a tabela em formato latex em um arquivo
-arq_termistor_latex = open('latex/tabelas/termistor.tex', 'w')
+#salva a tabela em arquivo .tex
+arq_termistor_latex = open('latex/tabelas/termistor_linearizado.tex', 'w')
 arq_termistor_latex.write(lab.tabela_latex(df_termistor_latex))
 arq_termistor_latex.close()
 
@@ -208,12 +208,12 @@ arq_termistor_latex.close()
 ###############################################################################
 #salvando formulas de incertezas propagadas em latex
 
-#propaga incerteza no calculo da resistencia do termistor
-incProp_res_termistor = lab.propaga_incerteza(
+#propaga incerteza no calculo da resistência de R_x
+propInc_res_R_x = lab.propaga_incerteza(
         'R_x',
         'R_1/R_2 * R_d',
         ['R_1', 'R_2', 'R_d']
         )
 
-incProp_res_termistor.to_file('latex/outros/incProp_resistencia_termistor.tex')
+propInc_res_R_x.to_file('latex/outros/propInc_resistencia_R_x.tex')
 
