@@ -12,11 +12,15 @@ import uncertainties.unumpy as unp #incertezas
 
 #adicionais
 from textwrap import dedent #retira identação de string multilinea
+from sys import platform #confere qual sistema operacional é
 
-#seta o workdirectory como o diretório do script
-#aux = os.path.expanduser('~/MEGA/Unicamp/3° Semestre/F329_lab3/experimento_2/planejamento')
-aux = os.path.expanduser('/Users/LeoBianco/Documents/git/F329_lab3/experimento_2/planejamento')
-os.chdir(aux)
+#a partir do sistema operacional, seta o diretório de trabalho como o diretório do script
+if platform == "linux": #linux
+    wd = os.path.expanduser('~/MEGA/Unicamp/3° Semestre/F329_lab3/experimento_2/planejamento')
+elif platform == "darwin": #OS X
+    wd = os.path.expanduser('/Users/LeoBianco/Documents/git/F329_lab3/experimento_2/planejamento')
+
+os.chdir(wd)
 
 #carrega a lablib
 import lablib as lab #funções pessoais de lab
@@ -25,7 +29,7 @@ import lablib as lab #funções pessoais de lab
 #importa dados
 df_termistor_raw = pd.read_csv('dados_coletados/termistor_raw.csv')
 
-#anota valores (Ohms)
+#anota valores das resistências (Ohms)
 #resitencia avaliada
 R_x_nominal = 68
 R_x_ohmimetro = unc.ufloat(
@@ -67,23 +71,25 @@ R_d_wheatstone = unc.ufloat(
 def to_kelvin(temperatura):
     return temperatura + 273.15
 
+#talvez tenha que levar em conta o valor da voltagem na ponte de wheatstone
 #calcula resistência do termistor
 def calc_resistencia_termistor(R_1, R_2, R_d):
     return R_1/R_2 * R_d
 
 #calcula incerteza na resitência do termistor
-#talvez tenha que levar em conta o valor da voltagem na ponte de wheatstone
 def inc_resistencia_termistor(R_1, R_2, R_d, dR_1, dR_2, dR_d):
-    return (R_1**2*dR_d**2/R_2**2 + 
-            R_1**2*R_d**2*dR_2**2/R_2**4 + 
-            R_d**2*dR_1**2/R_2**2)**0.5
+    return (R_1**2*dR_d**2/R_2**2 
+            + R_1**2*R_d**2*dR_2**2/R_2**4 
+            + R_d**2*dR_1**2/R_2**2)**0.5
 
 #retorna um vetor string-latex de uncertainties com apenas um algarismo signficativo
 alg_sig = np.vectorize(lambda x: '${:.1u}$'.format(x).replace('+/-', ' \pm '))
 
+#retorna o valor nominal de um série contendo objetos uncertainty
 def leo_valor(series):
     return series.apply(lambda x: x.nominal_value)
 
+#retorna a incerteza de um série contendo objetos uncertainty
 def leo_inc(series):
     return series.apply(lambda x: x.std_dev)
 
@@ -98,47 +104,47 @@ df_termistor = pd.DataFrame(
         data = { #colunas
                 'Temperatura [°C]' : unp.uarray(
                         df_termistor_raw['Temperatura [°C]'],
-                        lab.incerteza_triangular(
+                        lab.incerteza_triangular( #calcula incerteza da medida do termometro
                                 df_termistor_raw['Temperatura [°C]'],
-                                a = 1
+                                a = 1 #intervalo (medida - 1),5 a medida,5
                                 )
                         ),
                 'Resistência de decada [$\Omega$]' : unp.uarray(
                         df_termistor_raw['Resistência de decada [$\Omega$]'],
-                        lab.incerteza_retangular(
+                        lab.incerteza_retangular( #calcula incerteza da medida da decada
                                 df_termistor_raw['Resistência de decada [$\Omega$]'],
-                                a = 1
+                                a = 1 #intervalo (medida - 1),5 a medida,5
                                 )
                         ),
                 'Voltagem [V]' : unp.uarray(
                         df_termistor_raw['Voltagem [V]'],
-                        lab.incerteza_voltimetro(
+                        lab.incerteza_voltimetro( #calcula a incerteza do voltimetro
                                 df_termistor_raw['Voltagem [V]']
                                 )
                         ),
                 'Ohmimetro [$\\Omega$]' : unp.uarray(
                         df_termistor_raw['Ohmimetro [$\\Omega$]'],
-                        lab.incerteza_ohmimetro(
+                        lab.incerteza_ohmimetro( #calcula a incerteza do ohmimetro
                                 df_termistor_raw['Ohmimetro [$\\Omega$]']
                                 )
                         )
                 },
     columns = [ #ordem das colunas
                'Temperatura [°C]',
-               'Resistência de decada [$\Omega$]',
+               'Resistência de decada [$\\Omega$]',
                'Voltagem [V]',
                'Ohmimetro [$\\Omega$]'
                ]
-        )
-
-
+    )               
+            
+#junta a resistência da década junto com sua incerteza em um objeto uncertainty
 res_decada = unp.uarray(
         df_termistor_raw['Resistência de decada [$\\Omega$]'],
         lab.incerteza_retangular(#incerteza da resistencia de decada
                                  #necessário para a propagação de incerteza
-                                 df_termistor_raw['Resistência de decada [$\Omega$]'],
-                                 a = 1
-                                 )
+                df_termistor_raw['Resistência de decada [$\Omega$]'],
+                a = 1 #intervalo (medida - 1),5 a medida,5
+                )
         )
 
 
@@ -189,7 +195,8 @@ df_coeficientes_grafico_linearizado = lab.odr_linear(
         y = leo_valor(df_termistor_linearizado['ln(RNTC) [$\Omega$]']),
         dx = leo_inc(df_termistor_linearizado['1/T [K]']),
         dy = leo_inc(df_termistor_linearizado['ln(RNTC) [$\Omega$]'])
-                                                 )
+        )
+    
 # gráfico do ln(RNTC) x 1 / T
 plt.errorbar(       
         x = leo_valor(df_termistor_linearizado['1/T [K]']),
@@ -202,21 +209,22 @@ plt.errorbar(
         )
 
 #Plotando em cima do gráfico linearizado a reta esperada.
-plt.errorbar(
-      x = leo_valor(df_termistor_linearizado['1/T [K]']),
-      y = df_coeficientes_grafico_linearizado['Valor'][0] * leo_valor(df_termistor_linearizado['1/T [K]']) + df_coeficientes_grafico_linearizado['Valor'][1],
-       
-      label = 'Dados previstos',
+plt.plot(
+    leo_valor(df_termistor_linearizado['1/T [K]']),
+    (df_coeficientes_grafico_linearizado['Valor'][0]
+    * leo_valor(df_termistor_linearizado['1/T [K]'])
+    + df_coeficientes_grafico_linearizado['Valor'][1]),
+    label = 'Dados previstos',  
+    )
         
-        )
-plt.legend()
-
 plt.title('Gráfico $\ln(R_{NTC})$ x 1/T [$K^{-1}$]')
 plt.xlabel('1/T [$K^{-1}$]') #Kelvins
 plt.ylabel('$\ln(R_{NTC})$ [$\ln(\Omega)$]') #Sem unidade.
+plt.legend()
 plt.savefig('grafico_linearizado.png')
 
 plt.show()
+
 
 # Gráfico sem linearização de temperatura e resistência. Não ficou parecendo exponencial.
 plt.errorbar(
@@ -231,17 +239,14 @@ plt.errorbar(
 
 
 #Gráfico da exponencial por cima:
-    
-plt.errorbar( 
-            x = leo_valor(df_termistor['Temperatura [°C]'] + 273.5), #Transforma em kelvins.
-            y = np.exp(df_coeficientes_grafico_linearizado['Valor'][1])
-            * np.exp(df_coeficientes_grafico_linearizado['Valor'][0] 
-            / (leo_valor(df_termistor['Temperatura [°C]']) + 273.5)
-                        ),
-            label = 'Dados previstos',
-            capsize = 3
-            )
-
+plt.plot(
+    leo_valor(df_termistor['Temperatura [°C]'] + 273.5), #Transforma em kelvins.
+    (np.exp(df_coeficientes_grafico_linearizado['Valor'][1])
+    * np.exp(df_coeficientes_grafico_linearizado['Valor'][0] 
+    / (leo_valor(df_termistor['Temperatura [°C]']) + 273.5))),
+    label = 'Dados previstos'
+    )
+            
 plt.title('Gráfico $R_{NTC} [\Omega]$ x $T [K]$')
 plt.xlabel('$T [K]$') #Kelvins
 plt.ylabel('$R_{NTC} [\Omega]$')
