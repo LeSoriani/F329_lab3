@@ -13,6 +13,7 @@ import uncertainties.unumpy as unp #incertezas
 #adicionais
 from textwrap import dedent #retira identação de string multilinea
 from sys import platform #confere qual sistema operacional é
+from math import exp #função exponencial
 
 #a partir do sistema operacional, seta o diretório de trabalho como o diretório do script
 if platform == "linux": #linux
@@ -24,6 +25,8 @@ os.chdir(wd)
 
 #carrega a lablib
 import lablib as lab #funções pessoais de lab
+
+
 
 #%%
 #importa dados
@@ -65,6 +68,8 @@ R_d_wheatstone = unc.ufloat(
         lab.incerteza_ohmimetro(66.0)
         )
 
+
+
 #%%
 #define funções
 
@@ -92,6 +97,17 @@ def leo_valor(series):
 #retorna a incerteza de um série contendo objetos uncertainty
 def leo_inc(series):
     return series.apply(lambda x: x.std_dev)
+
+#função do tipo f(x) = a*x + b
+def curva_reta(x, a, b):
+    return a*x + b
+
+#função do tipo f(x) = a*exp(b * x)
+def curva_exp(x, a, b):
+    return a*np.exp(b * x)
+
+
+
 
 
 #%%
@@ -122,53 +138,58 @@ df_termistor = pd.DataFrame(
                                 df_termistor_raw['Voltagem [V]']
                                 )
                         ),
-                'Ohmimetro [$\\Omega$]' : unp.uarray(
-                        df_termistor_raw['Ohmimetro [$\\Omega$]'],
+                'Ohmimetro [$\Omega$]' : unp.uarray(
+                        df_termistor_raw['Ohmimetro [$\Omega$]'],
                         lab.incerteza_ohmimetro( #calcula a incerteza do ohmimetro
-                                df_termistor_raw['Ohmimetro [$\\Omega$]']
+                                df_termistor_raw['Ohmimetro [$\Omega$]']
                                 )
                         )
                 },
     columns = [ #ordem das colunas
                'Temperatura [°C]',
-               'Resistência de decada [$\\Omega$]',
+               'Resistência de decada [$\Omega$]',
                'Voltagem [V]',
-               'Ohmimetro [$\\Omega$]'
+               'Ohmimetro [$\Omega$]'
                ]
     )               
             
-#junta a resistência da década junto com sua incerteza em um objeto uncertainty
-res_decada = unp.uarray(
-        df_termistor_raw['Resistência de decada [$\\Omega$]'],
+#junta a resistência da década com sua incerteza em um objeto uncertainty
+aux_res_decada = unp.uarray(
+        df_termistor_raw['Resistência de decada [$\Omega$]'],
         lab.incerteza_retangular(#incerteza da resistencia de decada
-                                 #necessário para a propagação de incerteza
                 df_termistor_raw['Resistência de decada [$\Omega$]'],
                 a = 1 #intervalo (medida - 1),5 a medida,5
                 )
         )
 
 
+#cria outra coluna do df_termistor para a resistência do termistor
 #calcula a resistencia do termistor e sua incerteza com o pacote uncertainties
-df_termistor['Resistência do termistor [$\\Omega$]'] = calc_resistencia_termistor(#valor da resistência do termistor
-            R_1_ohmimetro,
-            R_2_ohmimetro,
-            res_decada
-            )
+df_termistor['Resistência do termistor [$\Omega$]'] = calc_resistencia_termistor(#valor da resistência do termistor
+        R_1_ohmimetro,
+        R_2_ohmimetro,
+        aux_res_decada
+        )
 
 
 #dataframe necessario para a linearização
 df_termistor_linearizado = pd.DataFrame(
         data = {#colunas
-                '1/T [K]' : 1 / (df_termistor['Temperatura [°C]'] + 273.15), #transforma em kelvin antes de inverter
-                'RNTC [$\\Omega$]' : df_termistor['Resistência do termistor [$\\Omega$]'],#resistência do termistor ou da decada?
-                'ln(RNTC) [$\\Omega$]' : unp.log(df_termistor['Resistência do termistor [$\\Omega$]'])
+                '1/T [K^-1]' : 1 / (df_termistor['Temperatura [°C]'] + 273.15), #transforma em kelvin antes de inverter
+                'RNTC [$\Omega$]' : df_termistor['Resistência do termistor [$\Omega$]'],#resistência do termistor ou da decada?
+                '$\ln (R_{NTC}) [\ln (\Omega)]$' : unp.log(df_termistor['Resistência do termistor [$\Omega$]'])
                 },
         columns = [ #ordem das colunas
-                '1/T [K]',
-                'RNTC [$\\Omega$]',
-                'ln(RNTC) [$\\Omega$]'
+                '1/T [K^-1]',
+                'RNTC [$\Omega$]',
+                '$\ln (R_{NTC}) [\ln (\Omega)]$'
                 ]
         )
+
+
+
+
+
 #%%
 ###############################################################################
 #calculando valores importantes
@@ -181,6 +202,10 @@ R_x = calc_resistencia_termistor(
         R_d_wheatstone
         )
 
+
+
+
+
 #%%
 ###############################################################################
 #plot de gráficos
@@ -190,32 +215,34 @@ R_x = calc_resistencia_termistor(
 #grafico RNTC x 1/T com curva exponencial
 
 # Obtendo os coeficientes da linearização ln(RNTC) x 1/T
-df_coeficientes_grafico_linearizado = lab.odr_linear( 
-        x = leo_valor(df_termistor_linearizado['1/T [K]']),
-        y = leo_valor(df_termistor_linearizado['ln(RNTC) [$\Omega$]']),
-        dx = leo_inc(df_termistor_linearizado['1/T [K]']),
-        dy = leo_inc(df_termistor_linearizado['ln(RNTC) [$\Omega$]'])
+df_coeficientes_linearizado = lab.odr_linear( 
+        x = leo_valor(df_termistor_linearizado['1/T [K^-1]']),
+        y = leo_valor(df_termistor_linearizado['$\ln (R_{NTC}) [\ln (\Omega)]$']),
+        dx = leo_inc(df_termistor_linearizado['1/T [K^-1]']),
+        dy = leo_inc(df_termistor_linearizado['$\ln (R_{NTC}) [\ln (\Omega)]$'])
         )
     
 # gráfico do ln(RNTC) x 1 / T
 plt.errorbar(       
-        x = leo_valor(df_termistor_linearizado['1/T [K]']),
-        y = leo_valor(df_termistor_linearizado['ln(RNTC) [$\Omega$]']),
-        xerr = leo_inc(df_termistor_linearizado['1/T [K]']),
-        yerr = leo_inc(df_termistor_linearizado['ln(RNTC) [$\Omega$]']),
-        fmt = '.k',
+        x = leo_valor(df_termistor_linearizado['1/T [K^-1]']),
+        y = leo_valor(df_termistor_linearizado['$\ln (R_{NTC}) [\ln (\Omega)]$']),
+        xerr = leo_inc(df_termistor_linearizado['1/T [K^-1]']),
+        yerr = leo_inc(df_termistor_linearizado['$\ln (R_{NTC}) [\ln (\Omega)]$']),
+        fmt = 'k.',
         label = 'Dados experimentais',
-        capsize = 3
+        capsize = 0
         )
 
 #Plotando em cima do gráfico linearizado a reta esperada.
 plt.plot(
-    leo_valor(df_termistor_linearizado['1/T [K]']),
-    (df_coeficientes_grafico_linearizado['Valor'][0]
-    * leo_valor(df_termistor_linearizado['1/T [K]'])
-    + df_coeficientes_grafico_linearizado['Valor'][1]),
-    label = 'Dados previstos',  
-    )
+        leo_valor(df_termistor_linearizado['1/T [K^-1]']),
+        curva_reta(
+                leo_valor(df_termistor_linearizado['1/T [K^-1]']),
+                df_coeficientes_linearizado['Valor'][0],
+                df_coeficientes_linearizado['Valor'][1]
+                ),
+        label = 'Dados previstos'
+        )
         
 plt.title('Gráfico $\ln(R_{NTC})$ x 1/T [$K^{-1}$]')
 plt.xlabel('1/T [$K^{-1}$]') #Kelvins
@@ -226,27 +253,30 @@ plt.savefig('grafico_linearizado.png')
 plt.show()
 
 
+
 # Gráfico sem linearização de temperatura e resistência. Não ficou parecendo exponencial.
 plt.errorbar(
-                x = leo_valor(df_termistor['Temperatura [°C]']) + 273.5, #Transforma em kelvins.
-                y = leo_valor(df_termistor['Resistência do termistor [$\Omega$]']),
-                xerr = leo_inc(df_termistor['Temperatura [°C]']),
-                yerr = leo_inc(df_termistor['Resistência do termistor [$\Omega$]']),
-                label = 'Dados experimentais',
-                fmt = '.k',
-                capsize = 3
-                )
+        x = leo_valor(df_termistor['Temperatura [°C]']) + 273.5, #Transforma em kelvins.
+        y = leo_valor(df_termistor['Resistência do termistor [$\Omega$]']),
+        xerr = leo_inc(df_termistor['Temperatura [°C]']),
+        yerr = leo_inc(df_termistor['Resistência do termistor [$\Omega$]']),
+        label = 'Dados experimentais',
+        fmt = 'k.',
+        capsize = 0
+        )
 
 
 #Gráfico da exponencial por cima:
 plt.plot(
-    leo_valor(df_termistor['Temperatura [°C]'] + 273.5), #Transforma em kelvins.
-    (np.exp(df_coeficientes_grafico_linearizado['Valor'][1])
-    * np.exp(df_coeficientes_grafico_linearizado['Valor'][0] 
-    / (leo_valor(df_termistor['Temperatura [°C]']) + 273.5))),
-    label = 'Dados previstos'
-    )
-            
+        leo_valor(df_termistor['Temperatura [°C]']) + 273.15, #Transforma em kelvins.
+        curva_exp(
+                1 / (leo_valor(df_termistor['Temperatura [°C]']) + 273.15),
+                exp(df_coeficientes_linearizado.loc['b', 'Valor']),
+                df_coeficientes_linearizado.loc['a', 'Valor']
+                ),
+        label = 'Dados previstos'
+        )
+ 
 plt.title('Gráfico $R_{NTC} [\Omega]$ x $T [K]$')
 plt.xlabel('$T [K]$') #Kelvins
 plt.ylabel('$R_{NTC} [\Omega]$')
@@ -254,14 +284,8 @@ plt.legend()
 plt.savefig('grafico_exponencial.png')
             
 plt.show()
-        
 
 
-                
-                
-
-
-    
 
 
 
@@ -272,14 +296,14 @@ plt.show()
 #representa os valalores com as incertezas em string-latex e salva em um data frame
 df_termistor_latex = pd.DataFrame(
         data = { #colunas
-                '1/T [K]' : alg_sig(df_termistor_linearizado['1/T [K]']),
-                'RNTC [$\\Omega$]' : alg_sig(df_termistor_linearizado['RNTC [$\\Omega$]']),
-                'ln(RNTC) [$\\Omega$]' : alg_sig(df_termistor_linearizado['ln(RNTC) [$\\Omega$]'])
+                '1/T [K^-1]' : alg_sig(df_termistor_linearizado['1/T [K^-1]']),
+                'RNTC [$\Omega$]' : alg_sig(df_termistor_linearizado['RNTC [$\Omega$]']),
+                '$\ln (R_{NTC}) [\ln (\Omega)]$' : alg_sig(df_termistor_linearizado['$\ln (R_{NTC}) [\ln (\Omega)]$'])
                 },
         columns = [ #ordem das colunas
-                   '1/T [K]',
-                   'RNTC [$\\Omega$]',
-                   'ln(RNTC) [$\\Omega$]'
+                   '1/T [K^-1]',
+                   'RNTC [$\Omega$]',
+                   '$\ln (R_{NTC}) [\ln (\Omega)]$'
                    ]
         )
 
