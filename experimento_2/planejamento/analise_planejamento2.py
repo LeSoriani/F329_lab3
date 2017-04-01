@@ -14,8 +14,8 @@ import uncertainties.unumpy as unp #incertezas
 from textwrap import dedent #retira identação de string multilinea
 
 #seta o workdirectory como o diretório do script
-aux = os.path.expanduser('~/MEGA/Unicamp/3° Semestre/F329_lab3/experimento_2/planejamento')
-#aux = os.path.expanduser('/Users/LeoBianco/Documents/git/F329_lab3/experimento_2/planejamento')
+#aux = os.path.expanduser('~/MEGA/Unicamp/3° Semestre/F329_lab3/experimento_2/planejamento')
+aux = os.path.expanduser('/Users/LeoBianco/Documents/git/F329_lab3/experimento_2/planejamento')
 os.chdir(aux)
 
 #carrega a lablib
@@ -182,6 +182,77 @@ R_x = calc_resistencia_termistor(
 #calcular coeficientes da reta
 #grafico ln(RNTC) x 1/T
 #grafico RNTC x 1/T com curva exponencial
+
+# Obtendo os coeficientes da linearização ln(RNTC) x 1/T
+df_coeficientes_grafico_linearizado = lab.odr_linear( 
+        x = leo_valor(df_termistor_linearizado['1/T [K]']),
+        y = leo_valor(df_termistor_linearizado['ln(RNTC) [$\Omega$]']),
+        dx = leo_inc(df_termistor_linearizado['1/T [K]']),
+        dy = leo_inc(df_termistor_linearizado['ln(RNTC) [$\Omega$]'])
+                                                 )
+# gráfico do ln(RNTC) x 1 / T
+plt.errorbar(       
+        x = leo_valor(df_termistor_linearizado['1/T [K]']),
+        y = leo_valor(df_termistor_linearizado['ln(RNTC) [$\Omega$]']),
+        xerr = leo_inc(df_termistor_linearizado['1/T [K]']),
+        yerr = leo_inc(df_termistor_linearizado['ln(RNTC) [$\Omega$]']),
+        fmt = '.k',
+        label = 'Dados experimentais',
+        capsize = 3
+        )
+
+plt.title('Gráfico $\ln(R_{NTC})$ x 1/T [$K^{-1}$]')
+plt.xlabel('1/T [$K^{-1}$]') #Kelvins
+plt.ylabel('$\ln(R_{NTC})$ [$\ln(\Omega)$]') #Sem unidade.
+plt.savefig('grafico_linearizado.png')
+
+#Plotando em cima do gráfico linearizado a reta esperada.
+plt.errorbar(
+      x = leo_valor(df_termistor_linearizado['1/T [K]']),
+      y = df_coeficientes_grafico_linearizado['Valor'][0] * leo_valor(df_termistor_linearizado['1/T [K]']) + df_coeficientes_grafico_linearizado['Valor'][1],
+       
+      label = 'Dados previstos',
+        
+        )
+plt.legend()
+plt.show()
+
+# Gráfico sem linearização de temperatura e resistência. Não ficou parecendo exponencial.
+plt.errorbar(
+                x = leo_valor(df_termistor['Temperatura [°C]']) + 273.5, #Transforma em kelvins.
+                y = leo_valor(df_termistor['Resistência do termistor [$\Omega$]']),
+                xerr = leo_inc(df_termistor['Temperatura [°C]']),
+                yerr = leo_inc(df_termistor['Resistência do termistor [$\Omega$]']),
+                label = 'Dados experimentais',
+                fmt = '.k',
+                capsize = 3
+        )
+
+
+#Gráfico da exponencial por cima:
+plt.errorbar( 
+            x = leo_valor(df_termistor['Temperatura [°C]'] + 273.5), #Transforma em kelvins.
+            y = (exp(leo_valor(df_termistor['Temperatura [°C]']))) #de B sobre T
+        )
+            
+plt.show()
+        
+'''
+df_coeficientes_grafico_linearizado['Valor'][0] # 'A'
+             * exp(1 # vezes exponencial
+             / ((leo_valor(df_termistor['Temperatura [°C]'])) + 273.5))
+'''
+plt.title('Gráfico $R_{NTC} [\Omega]$ x $T [K]$')
+plt.xlabel('$T [K]$') #Kelvins
+plt.ylabel('$R_{NTC} [\Omega]$') 
+plt.savefig('grafico_exponencial.png')
+                
+                
+
+
+    
+
+
 
 #%%
 ###############################################################################
