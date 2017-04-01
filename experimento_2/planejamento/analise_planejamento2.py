@@ -125,10 +125,10 @@ df_termistor = pd.DataFrame(
                                 a = 1 #intervalo (medida - 1),5 a medida,5
                                 )
                         ),
-                'Resistência de decada [$\Omega$]' : unp.uarray(
-                        df_termistor_raw['Resistência de decada [$\Omega$]'],
+                'Resistência de decada [Ohms]' : unp.uarray(
+                        df_termistor_raw['Resistência de decada [Ohms]'],
                         lab.incerteza_retangular( #calcula incerteza da medida da decada
-                                df_termistor_raw['Resistência de decada [$\Omega$]'],
+                                df_termistor_raw['Resistência de decada [Ohms]'],
                                 a = 1 #intervalo (medida - 1),5 a medida,5
                                 )
                         ),
@@ -138,26 +138,26 @@ df_termistor = pd.DataFrame(
                                 df_termistor_raw['Voltagem [V]']
                                 )
                         ),
-                'Ohmimetro [$\Omega$]' : unp.uarray(
-                        df_termistor_raw['Ohmimetro [$\Omega$]'],
+                'Ohmimetro [Ohms]' : unp.uarray(
+                        df_termistor_raw['Ohmimetro [Ohms]'],
                         lab.incerteza_ohmimetro( #calcula a incerteza do ohmimetro
-                                df_termistor_raw['Ohmimetro [$\Omega$]']
+                                df_termistor_raw['Ohmimetro [Ohms]']
                                 )
                         )
                 },
     columns = [ #ordem das colunas
                'Temperatura [°C]',
-               'Resistência de decada [$\Omega$]',
+               'Resistência de decada [Ohms]',
                'Voltagem [V]',
-               'Ohmimetro [$\Omega$]'
+               'Ohmimetro [Ohms]'
                ]
     )               
             
 #junta a resistência da década com sua incerteza em um objeto uncertainty
 aux_res_decada = unp.uarray(
-        df_termistor_raw['Resistência de decada [$\Omega$]'],
+        df_termistor_raw['Resistência de decada [Ohms]'],
         lab.incerteza_retangular(#incerteza da resistencia de decada
-                df_termistor_raw['Resistência de decada [$\Omega$]'],
+                df_termistor_raw['Resistência de decada [Ohms]'],
                 a = 1 #intervalo (medida - 1),5 a medida,5
                 )
         )
@@ -165,7 +165,7 @@ aux_res_decada = unp.uarray(
 
 #cria outra coluna do df_termistor para a resistência do termistor
 #calcula a resistencia do termistor e sua incerteza com o pacote uncertainties
-df_termistor['Resistência do termistor [$\Omega$]'] = calc_resistencia_termistor(#valor da resistência do termistor
+df_termistor['Resistência do termistor [Ohms]'] = calc_resistencia_termistor(#valor da resistência do termistor
         R_1_ohmimetro,
         R_2_ohmimetro,
         aux_res_decada
@@ -176,13 +176,13 @@ df_termistor['Resistência do termistor [$\Omega$]'] = calc_resistencia_termisto
 df_termistor_linearizado = pd.DataFrame(
         data = {#colunas
                 '1/T [K^-1]' : 1 / (df_termistor['Temperatura [°C]'] + 273.15), #transforma em kelvin antes de inverter
-                'RNTC [$\Omega$]' : df_termistor['Resistência do termistor [$\Omega$]'],#resistência do termistor ou da decada?
-                '$\ln (R_{NTC}) [\ln (\Omega)]$' : unp.log(df_termistor['Resistência do termistor [$\Omega$]'])
+                'R_NTC [Ohms]' : df_termistor['Resistência do termistor [Ohms]'],#resistência do termistor ou da decada?
+                'ln(R_NTC) [ln(Ohms)]' : unp.log(df_termistor['Resistência do termistor [Ohms]'])
                 },
         columns = [ #ordem das colunas
                 '1/T [K^-1]',
-                'RNTC [$\Omega$]',
-                '$\ln (R_{NTC}) [\ln (\Omega)]$'
+                'R_NTC [Ohms]',
+                'ln(R_NTC) [ln(Ohms)]'
                 ]
         )
 
@@ -217,17 +217,17 @@ R_x = calc_resistencia_termistor(
 # Obtendo os coeficientes da linearização ln(RNTC) x 1/T
 df_coeficientes_linearizado = lab.odr_linear( 
         x = leo_valor(df_termistor_linearizado['1/T [K^-1]']),
-        y = leo_valor(df_termistor_linearizado['$\ln (R_{NTC}) [\ln (\Omega)]$']),
+        y = leo_valor(df_termistor_linearizado['ln(R_NTC) [ln(Ohms)]']),
         dx = leo_inc(df_termistor_linearizado['1/T [K^-1]']),
-        dy = leo_inc(df_termistor_linearizado['$\ln (R_{NTC}) [\ln (\Omega)]$'])
+        dy = leo_inc(df_termistor_linearizado['ln(R_NTC) [ln(Ohms)]'])
         )
     
 # gráfico do ln(RNTC) x 1 / T
 plt.errorbar(       
         x = leo_valor(df_termistor_linearizado['1/T [K^-1]']),
-        y = leo_valor(df_termistor_linearizado['$\ln (R_{NTC}) [\ln (\Omega)]$']),
+        y = leo_valor(df_termistor_linearizado['ln(R_NTC) [ln(Ohms)]']),
         xerr = leo_inc(df_termistor_linearizado['1/T [K^-1]']),
-        yerr = leo_inc(df_termistor_linearizado['$\ln (R_{NTC}) [\ln (\Omega)]$']),
+        yerr = leo_inc(df_termistor_linearizado['ln(R_NTC) [ln(Ohms)]']),
         fmt = 'k.',
         label = 'Dados experimentais',
         capsize = 0
@@ -244,11 +244,11 @@ plt.plot(
         label = 'Dados previstos'
         )
         
-plt.title('Gráfico $\ln(R_{NTC})$ x 1/T [$K^{-1}$]')
-plt.xlabel('1/T [$K^{-1}$]') #Kelvins
-plt.ylabel('$\ln(R_{NTC})$ [$\ln(\Omega)$]') #Sem unidade.
+plt.title('Gráfico $\ln(R_{NTC})\ [\ln(\Omega)] \\times 1/T\ [K^{-1}]$')
+plt.xlabel('$1/T\ [K^-1]$') #Kelvins
+plt.ylabel('$\ln(R_{NTC})\ [\ln(\Omega)]$') #Sem unidade.
 plt.legend()
-plt.savefig('grafico_linearizado.png')
+plt.savefig('latex/figuras/fig_termistor_linearizado.png')
 
 plt.show()
 
@@ -257,9 +257,9 @@ plt.show()
 # Gráfico sem linearização de temperatura e resistência. Não ficou parecendo exponencial.
 plt.errorbar(
         x = leo_valor(df_termistor['Temperatura [°C]']) + 273.5, #Transforma em kelvins.
-        y = leo_valor(df_termistor['Resistência do termistor [$\Omega$]']),
+        y = leo_valor(df_termistor['Resistência do termistor [Ohms]']),
         xerr = leo_inc(df_termistor['Temperatura [°C]']),
-        yerr = leo_inc(df_termistor['Resistência do termistor [$\Omega$]']),
+        yerr = leo_inc(df_termistor['Resistência do termistor [Ohms]']),
         label = 'Dados experimentais',
         fmt = 'k.',
         capsize = 0
@@ -277,11 +277,11 @@ plt.plot(
         label = 'Dados previstos'
         )
  
-plt.title('Gráfico $R_{NTC} [\Omega]$ x $T [K]$')
-plt.xlabel('$T [K]$') #Kelvins
-plt.ylabel('$R_{NTC} [\Omega]$')
+plt.title('Gráfico $R_{NTC}\ [\Omega] \\times T\ [K]$')
+plt.xlabel('$T\ [K]$') #Kelvins
+plt.ylabel('$R_{NTC}\ [\Omega]$')
 plt.legend() 
-plt.savefig('grafico_exponencial.png')
+plt.savefig('latex/figuras/fig_termistor.png')
             
 plt.show()
 
@@ -296,19 +296,19 @@ plt.show()
 #representa os valalores com as incertezas em string-latex e salva em um data frame
 df_termistor_latex = pd.DataFrame(
         data = { #colunas
-                '1/T [K^-1]' : alg_sig(df_termistor_linearizado['1/T [K^-1]']),
-                'RNTC [$\Omega$]' : alg_sig(df_termistor_linearizado['RNTC [$\Omega$]']),
-                '$\ln (R_{NTC}) [\ln (\Omega)]$' : alg_sig(df_termistor_linearizado['$\ln (R_{NTC}) [\ln (\Omega)]$'])
+                '$1/T [K^-1]$' : alg_sig(df_termistor_linearizado['1/T [K^-1]']),
+                '$R_{NTC} [\Omega]$' : alg_sig(df_termistor_linearizado['R_NTC [Ohms]']),
+                '$\ln(R_{NTC}) [\ln(\Omega)]$' : alg_sig(df_termistor_linearizado['ln(R_NTC) [ln(Ohms)]'])
                 },
         columns = [ #ordem das colunas
-                   '1/T [K^-1]',
-                   'RNTC [$\Omega$]',
-                   '$\ln (R_{NTC}) [\ln (\Omega)]$'
+                   '$1/T [K^-1]$',
+                   '$R_{NTC} [\Omega]$',
+                   '$\ln(R_{NTC}) [\ln(\Omega)]$'
                    ]
         )
 
 #salva a tabela em arquivo .tex
-arq_termistor_latex = open('latex/tabelas/termistor_linearizado.tex', 'w')
+arq_termistor_latex = open('latex/tabelas/tab_termistor_linearizado.tex', 'w')
 arq_termistor_latex.write(lab.tabela_latex(df_termistor_latex))
 arq_termistor_latex.close()
 
