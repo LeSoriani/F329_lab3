@@ -312,19 +312,67 @@ arq_termistor_latex = open('latex/tabelas/tab_termistor_linearizado.tex', 'w')
 arq_termistor_latex.write(lab.tabela_latex(df_termistor_latex))
 arq_termistor_latex.close()
 
+
+
+
+
 #%%
 ###############################################################################
 #salvando dados importantes em latex
 
-arq_R_x = open('latex/outros/resistencia_R_x', 'w')
+#salva o valor de R_x determiando pela ponte de wheatstone
+arq_R_x = open('latex/outros/R_x.tex', 'w')
 arq_R_x.write(dedent(
         '''
-        Resistência de R_x determinada usando o método da ponto de Wheatstone:
-        ${:.1u} \Omega$
+        Resistência de R_x determinada usando o método da ponte de Wheatstone:
+        $R_x = {:.1u} \Omega$
         '''.format(R_x).replace('+/-', ' \pm ')
         )
     )
 arq_R_x.close()
+
+
+#coeficientes linearizados do termistor
+coef_lin_a = unc.ufloat(
+        df_coeficientes_linearizado.loc['a', 'Valor'],
+        df_coeficientes_linearizado.loc['a', 'Incerteza']
+        )
+coef_lin_b = unc.ufloat(
+        df_coeficientes_linearizado.loc['b', 'Valor'],
+        df_coeficientes_linearizado.loc['b', 'Incerteza']
+        )
+
+#escreve em arquivo tex
+arq_coefLin_termistor = open('latex/outros/coefLin_termistor.tex', 'w')
+arq_coefLin_termistor.write(dedent(
+        '''
+        Coeficientes a e b de $\ln(R_{{NTC}}) = a + b t^-1$ determidados pela linearização:
+        a = ${:.1u}\ [\ln(\Omega) K]$
+        b = ${:.1u}\ [\ln(\Omega)]$
+        '''.format(coef_lin_a, coef_lin_b).replace('+/-', ' \pm ').replace('e+0', '10^')
+        )
+    )
+arq_coefLin_termistor.close()
+
+
+
+#coeficientes da exponencial
+coef_A = unc.ufloat(
+        exp(df_coeficientes_linearizado.loc['b', 'Valor']),
+        exp(df_coeficientes_linearizado.loc['b', 'Incerteza'])
+        )
+coef_B = coef_lin_a
+
+arq_coef_termistor = open('latex/outros/coef_termistor.tex', 'w')
+arq_coef_termistor.write(dedent(
+        '''
+        Coeficientes A, B de $R_{{NTC}} = A \exp(\\frac{{B}}{{T}})$:
+        $A = {:.1u}\ [\Omega]$
+        $B = {:.1u}\ [K]$
+        '''.format(coef_A, coef_B).replace('+/-', ' \pm ').replace('e+0', '10^')
+        )
+    )
+arq_coef_termistor.close()
 
 
 #%%
