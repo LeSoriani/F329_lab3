@@ -73,19 +73,13 @@ R_d_wheatstone = unc.ufloat(
 #%%
 #define funções
 
-def to_kelvin(temperatura):
-    return temperatura + 273.15
-
 #talvez tenha que levar em conta o valor da voltagem na ponte de wheatstone
 #calcula resistência do termistor
 def calc_resistencia_termistor(R_1, R_2, R_d):
     return R_1/R_2 * R_d
 
-#calcula incerteza na resitência do termistor
-def inc_resistencia_termistor(R_1, R_2, R_d, dR_1, dR_2, dR_d):
-    return (R_1**2*dR_d**2/R_2**2 
-            + R_1**2*R_d**2*dR_2**2/R_2**4 
-            + R_d**2*dR_1**2/R_2**2)**0.5
+def calc_resistencia_termistor_volt(R_1, R_2, R_d, V_in, V_g):
+    return R_d*(-R_1*V_g + R_1*V_in - R_2*V_g)/(R_1*V_g + R_2*V_g + R_2*V_in)
 
 #retorna um vetor string-latex de uncertainties com apenas um algarismo signficativo
 alg_sig = np.vectorize(lambda x: '${:.1u}$'.format(x).replace('+/-', ' \pm '))
@@ -387,4 +381,3 @@ propInc_res_R_x = lab.propaga_incerteza(
         )
 
 propInc_res_R_x.to_file('latex/outros/propInc_resistencia_R_x.tex')
-
