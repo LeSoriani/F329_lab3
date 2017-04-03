@@ -68,6 +68,11 @@ R_d_wheatstone = unc.ufloat(
         lab.incerteza_ohmimetro(66.0)
         )
 
+#tensão na fonte
+fonte_voltagem = unc.ufloat(
+        10.0,
+        0.1 / (2 * 6**0.5)
+        )
 
 
 #%%
