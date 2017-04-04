@@ -170,7 +170,7 @@ df_termistor = pd.DataFrame(
                 'R_d (ohmimetro) [Ohm]',
                 'V_g [V]'
                ]
-    )               
+    )
 
 
 
@@ -227,7 +227,7 @@ R_x = resistencia_termistor(
 #calcula os coeficientes da equação linearizada
 #ln(R_NTC) = ln(A) + B*(1/T)
 #y = a + b*t
-coeficientes_linearizado = lab.odr_linear( 
+coeficientes_linearizado = lab.odr_linear(
         x = unp.nominal_values(df_termistor_linearizado['1/T [K^-1]']),
         y = unp.nominal_values(df_termistor_linearizado['ln(R_NTC)']),
         dx = unp.std_devs(df_termistor_linearizado['1/T [K^-1]']),
@@ -252,10 +252,10 @@ curva_reta(
         coeficientes_linearizado[1].nominal_value, #coeficiente b
         'Dados previstos'
         )
-        
+
 plt.title('Gráfico $\ln(R_{NTC}) \\times 1/T\ [K^{-1}]$')
-plt.xlabel('$1/T\ [K^-1]$') #Kelvins
-plt.ylabel('$\ln(R_{NTC})$') #Sem unidade.
+plt.xlabel('$1/T\ [K^-1]$')
+plt.ylabel('$\ln(R_{NTC})$')
 plt.legend(loc = 'upper left') #bota a legenda no canto superior esquerdo
 
 plt.savefig('latex/figuras/fig_termistor_linearizado.png')
@@ -289,13 +289,13 @@ curva_termistor(
         coeficientes[1].nominal_value,
         'Dados previstos'
         )
- 
-plt.title('Gráfico $R_{NTC}\ [\Omega] \\times T\ [K]$')
-plt.xlabel('$T\ [K]$') #Kelvins
-plt.ylabel('$R_{NTC}\ [\Omega]$')
-plt.legend() 
 
-plt.savefig('latex/figuras/fig_termistor.png')            
+plt.title('Gráfico $R_{NTC}\ [\Omega] \\times T\ [K]$')
+plt.xlabel('$T\ [K]$')
+plt.ylabel('$R_{NTC}\ [\Omega]$')
+plt.legend()
+
+plt.savefig('latex/figuras/fig_termistor.png')
 plt.show()
 
 
@@ -388,3 +388,37 @@ propInc_res_R_x = lab.propaga_incerteza(
         )
 
 propInc_res_R_x.to_file('latex/outros/propagacaoIncerteza_R_x.tex')
+
+
+
+#propaga incerteza no cálculo do inverso da temperatura em kelvin
+#importante para a linearização e retirada de coeficientes
+propInc_temp = lab.propaga_incerteza(
+        't',
+        '1 / (T + 273.15)',
+        ['T']
+        )
+
+propInc_temp.to_file('latex/outros/propagacaoIncerteza_temperatura_invertida.tex')
+
+
+
+#propaga incerteza no cálculo do lagaritmo de R_NTC
+propInc_Y = lab.propaga_incerteza(
+        'Y',
+        'ln(R_NTC)',
+        ['R_NTC']
+        )
+
+propInc_Y.to_file('latex/outros/propagacaoIncerteza_Y.tex')
+
+
+
+#propaga a incerteza no cálculo do coeficiente A da exponencial a partir de exp(b) (reta)
+propInc_A = lab.propaga_incerteza(
+        'A',
+        'exp(b)',
+        ['b']
+        )
+
+propInc_A.to_file('latex/outros/propagacaoIncerteza_A.tex')
