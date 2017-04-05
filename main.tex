@@ -1,0 +1,125 @@
+% Classe de Documento
+\documentclass[12pt]{article}
+
+% Packages de línguas
+
+\usepackage[brazilian]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+
+% Packages de fontes
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsfonts}
+
+% Packages de Imagens
+\usepackage{graphicx}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{float}
+\graphicspath{ {logo/} }
+
+% Packages de Headers e Footers   
+%\usepackage{fancyhdr}
+%\pagestyle{fancy}
+
+% Packages de Array para Tabelas
+\usepackage{array}
+\usepackage{booktabs}
+\usepackage{longtable}
+
+%\lhead{Cabeçalho esquerdo} 
+%\rhead{Cabeçalho direito}
+
+% Packages adicionais
+\usepackage{indentfirst} %identa o primeiro paragrafo de uma seção
+\usepackage[top=1.5cm, bottom=2cm, right=2cm, left=2cm]{geometry} %redefine as margens
+
+\begin{document}
+
+    %título, turma, grupo e participantes  
+    \hfill \includegraphics[scale=0.1]{unicamp_logo} %inclui logo da Unicamp
+    
+    \begin{center}
+        \textbf{\Large
+            Relatório F 329 - Ponte de Wheatstone e Termistor
+        }%título do relatório
+        
+        \textit{Experimento 2, turma A, grupo 6}
+    
+        %integrantes
+        Gabriel Giacomini Marques, R.A: 172133 \\
+        Giuseppe Tinti Tomio, R.A: 173511 \\
+        Leonardo Martins Bianco, R.A: 178542 \\
+        Letícia Fernandes Soriani, R.A: 178811
+    \end{center}
+    
+    
+    %afirmação de honestidade
+    \def\abstractname{Afirmação de Honestidade} %Mudar o rótulo do abstract para que ele contenha a afirmação de honestidade
+    \begin{abstract}
+        A equipe declara que este relatório que está sendo entregue foi escrito por ela e que os resultados apresentados foram medidos por ela durante as aulas de F 329 no 1ºS/2017. Declara ainda que o relatório contém um texto original que não foi submetido anteriormente em nenhuma disciplina dentro ou fora da Unicamp.
+    \end{abstract}
+
+    
+    %resumo
+    \subsection*{Resumo}
+        
+    
+    %objetivos
+    \subsection*{Objetivos}
+       
+    Determinação da resistência R$_x$ de um resistor que equilibrava a ponte de Wheatstone e dos valores dos coeficientes A e B na equação típica do termistor.
+    
+    %metodologia	
+    \subsection*{Metodologia}    
+    
+    A realização do experimento se dividiu em duas partes, ambas envolvendo a Ponte de Wheatstone (Fig. \ref{Rx} e \ref{Termistor}). Para sua realização, foram necessários um multímetro, uma fonte de energia, três resistências de valor nominal 100 $\Omega$, uma resistência de valor nominal 68 $\Omega$, uma resistência de década (variável), uma placa de acrílico para montagem dos circuitos, um termômetro de álcool e um termistor.
+    
+    % Quando colocar as imagens dos circuitos, olhar qual referência já está feita a ela no parágrafo anterior e colocá-las lado a lado (se necessário, checar código no roteiro do experimento 1)
+    
+    A parte I consistiu no cálculo da resistência R$_x$ de uma resistor de valor nominal de 68 $\Omega$ a partir do uso da resistência de década R$_d$. Sabendo os valores de R$_1$ e R$_2$ (medidos com o ohmímetro) e montando a ponte como indicado na Fig \ref{Rx}, foi possível calcular R$_x$ através da equação$^1$:    
+    \begin{align}
+        R_1 \cdot R_d = R_2 \cdot R_x
+        \label{Encontrando Rx}
+    \end{align}
+    
+    Nesta parte, R$_d$ foi ajustada para que a ponte estivesse em equlíbrio, ou seja, para que a voltagem V$_v$ indicada no voltímetro fosse de 0 V, ou próxima dela. Assim, calculou-se o valor de R$_x$ encontrando o valor de R$_d$ que fazia com que V$_v$ \approx 0V, 
+    
+    Já a parte II consistiu na determinação da equação característica de um termistor. Montando a ponte de Wheatstone como indicado na Fig. \ref{Termistor} e deixando uma das pontas do termistor mergulhada em água cujas temperaturas inicial se aproximava de sua temperatura de ebulição (100$^{\circ}$C) e final se aproximava da temperatura ambiente 
+    (%VALOR DA TEMPERATURA AMBIENTE NO DIA DO EXPERIMENTO)
+    ), ajustava-se, para cada temperatura, o valor de R$_d$ que fazia com que V$_v$ \approx 0V.
+    
+    
+    %resultados obtidos
+    \subsection*{Resultados}
+    
+        
+    
+    
+    %análise de dados 
+    \subsection*{Análise de Dados}
+        
+        
+    
+    
+    %discussão
+    \subsection*{Discussão}
+        
+       
+    
+    
+    %conclusão
+    \subsection*{Conclusão}
+        
+       
+    
+    
+    %referências
+    \subsection*{Referências}
+    [1] Site efunda:
+    (http://www.efunda.com/designstandards/sensors/methods/wheatstone_bridge.cfm)
+    % O underline não está aparecendo no PDF, socorro!
+           
+\end{document}
+
