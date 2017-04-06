@@ -422,3 +422,14 @@ propInc_A = lab.propaga_incerteza(
         )
 
 propInc_A.to_file('latex/outros/propagacaoIncerteza_A.tex')
+
+
+
+#propaga incerteza no R_x usando a formula coxa
+propInc_R_x_coxa = lab.propaga_incerteza(
+        'R_x',
+        'R_d * R_1 / R_2',
+        ['R_d', 'R_1', 'R_2']
+        )
+
+propInc_R_x_coxa.to_file('latex/outros/propagacaoIncerteza_R_x_coxa')
