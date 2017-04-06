@@ -395,7 +395,7 @@ propInc_res_R_x.to_file('latex/outros/propagacaoIncerteza_R_x.tex')
 #importante para a linearização e retirada de coeficientes
 propInc_temp = lab.propaga_incerteza(
         't',
-        '1 / (T + 273.15)',
+        '1 / (T)',
         ['T']
         )
 

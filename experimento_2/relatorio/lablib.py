@@ -213,7 +213,7 @@ class propaga_incerteza:
         self.parciais = [self.formula.diff(i) for i in self.variaveis]
 
         #cria objetos sympy para as incertezas
-        inc_variaveis = sym.symbols(['\sigma_' + i for i in variaveis])
+        inc_variaveis = sym.symbols(['\sigma_{' + i + '}' for i in variaveis])
 
         #calcula a formula do erro propagado
         #calcula os termos da formula
@@ -230,8 +230,8 @@ class propaga_incerteza:
         latex_inc = sym.latex(self.formula_incerteza)
 
         #strings e lista de strings auxiliares para a impressão
-        aux_parciais = ['\\frac{\\parcial ' + str(self.grandeza) + '}{\\parcial ' + str(i) + '} = ' + j for i, j in zip(self.variaveis, latex_par)]
-        aux_incerteza = '\\sigma_' + str(self.grandeza) + ' = ' + str(latex_inc)
+        aux_parciais = ['\\frac{\\partial ' + str(self.grandeza) + '}{\\partial ' + str(i) + '} = ' + j for i, j in zip(self.variaveis, latex_par)]
+        aux_incerteza = '\\sigma_{' + str(self.grandeza) + '} = ' + str(latex_inc)
 
         #escreve arquivo
         aux_arq = open(path, 'w')
