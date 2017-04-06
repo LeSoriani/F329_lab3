@@ -353,7 +353,7 @@ arq_coefLin_termistor.write(dedent(
         Coeficientes a e b de $\ln(R_{{NTC}}) = a + b t^-1$ determidados pela linearização:
         a = ${:.1u}\ [K]$
         b = ${:.1u}$
-        '''.format(coeficientes_linearizado[0] , coeficientes_linearizado[0]).replace('+/-', ' \pm ').replace('e+0', '10^')
+        '''.format(coeficientes_linearizado[0] , coeficientes_linearizado[1]).replace('+/-', ' \pm ').replace('e+0', '10^')
         )
     )
 arq_coefLin_termistor.close()
