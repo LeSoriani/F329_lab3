@@ -80,7 +80,7 @@ R_d = unc.ufloat(
 #voltagem do voltímetro na ponte de wheatstone quando avaliando R_x
 V_g = unc.ufloat(
         0.002,
-        lab.incerteza_ohmimetro(0.002)
+        lab.incerteza_voltimetro(0.002)
         )
 
 #tensão na fonte
