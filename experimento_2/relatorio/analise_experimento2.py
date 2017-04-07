@@ -95,6 +95,19 @@ T_ambiente = unc.ufloat(
         1 / (2 * 6**0.5) #incerteza triangular (a = resolução)
         )
 
+#resistência do termistor quando a temperatura ambiente
+R_ambiente = unc.ufloat(
+        200,
+        lab.incerteza_ohmimetro(200)
+        )
+
+
+#resistência do termistor quando na mão
+R_mao = unc.ufloat(
+        130.0,
+        lab.incerteza_ohmimetro(130.0)
+        )
+
 
 
 #%%
@@ -105,6 +118,11 @@ T_ambiente = unc.ufloat(
 #formula derivada de V_g = V_in * (R_1*R_3 - R_2*R_4)/((R_1 + R_2)(R_3 + R_4))
 def resistencia_termistor(R_1, R_2, R_d, V_in, V_g):
     return R_d*(-R_1*V_g + R_1*V_in - R_2*V_g)/(R_1*V_g + R_2*V_g + R_2*V_in)
+
+#calcula a temperatura usando o termistor
+#deduzido a partir de R_NTC = A * exp(B / T)
+def calcula_temperatura(A, B, R):
+    return B / unc.umath_core.log(R/A)
 
 #retorna um vetor string-latex de uncertainties com apenas um algarismo signficativo
 alg_sig = np.vectorize(lambda x: '${:.1u}$'.format(x).replace('+/-', ' \pm '))
@@ -197,23 +215,6 @@ df_termistor_linearizado = pd.DataFrame(
                 'R_NTC [Ohm]',
                 'ln(R_NTC)'
                 ]
-        )
-
-
-
-
-
-#%%
-###############################################################################
-#calculando valores importantes
-
-#calcula resistência de R_x através da ponte de Wheatstone
-R_x = resistencia_termistor(
-        R_1,
-        R_2,
-        R_d,
-        V_in,
-        V_g
         )
 
 
@@ -331,6 +332,32 @@ arq_termistor_linearizado_latex.close()
 
 #%%
 ###############################################################################
+#calculando valores importantes
+
+#calcula resistência de R_x através da ponte de Wheatstone
+R_x = resistencia_termistor(
+        R_1,
+        R_2,
+        R_d,
+        V_in,
+        V_g
+        )
+
+
+
+#calcula a temperatura ambiente a partir do termistor
+T_termistor_ambiente = calcula_temperatura(coeficientes[0], coeficientes[1], R_ambiente) - 273.15 #converte pra celcius
+
+
+#calcula a temperatura corporal a partir do termistor
+T_mao = calcula_temperatura(coeficientes[0], coeficientes[1], R_mao) - 273.15 #converte pra celcius
+
+
+
+
+
+#%%
+###############################################################################
 #salvando dados importantes em latex
 
 #salva o valor de R_x determiando pela ponte de wheatstone
@@ -340,6 +367,20 @@ arq_R_x.write(dedent(
         Resistência de R_x determinada usando o método da ponte de Wheatstone:
         $R_x = {:.1u} \Omega$
         '''.format(R_x).replace('+/-', ' \pm ')
+        )
+    )
+arq_R_x.close()
+
+
+
+#salva o valor de temperatura ambiente e da mão determiando pela termistor
+arq_R_x = open('latex/outros/temperatura_resistor.tex', 'w')
+arq_R_x.write(dedent(
+        '''
+        Temperatura ambiente e da mão determiando pela termistor:
+        $T_{{ambiente}} = {:.1u} °C$
+        $T_{{mao}} = {:.1u} °C$
+        '''.format(T_ambiente, T_mao).replace('+/-', ' \pm ')
         )
     )
 arq_R_x.close()
@@ -433,3 +474,14 @@ propInc_R_x_coxa = lab.propaga_incerteza(
         )
 
 propInc_R_x_coxa.to_file('latex/outros/propagacaoIncerteza_R_x_coxa')
+
+
+
+#propaga incerteza no calculo da temperatura a partir da reistência do termistor
+propInc_tempertura_termistor = lab.propaga_incerteza(
+        'T',
+        'B / log(R/A)',
+        ['A', 'B', 'R']
+        )
+
+propInc_tempertura_termistor.to_file('latex/outros/propagacaoIncerteza_temperatura_termistor')
