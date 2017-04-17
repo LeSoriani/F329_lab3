@@ -1,0 +1,10 @@
+
+            Derivadas parciais:
+
+            \frac{\partial T}{\partial A} = \frac{B}{A \log^{2}{\left (\frac{R}{A} \right )}}
+\frac{\partial T}{\partial B} = \frac{1}{\log{\left (\frac{R}{A} \right )}}
+\frac{\partial T}{\partial R} = - \frac{B}{R \log^{2}{\left (\frac{R}{A} \right )}}
+
+            Equação da incerteza propagada:
+
+            \sigma_{T} = \left(\frac{B^{2} \sigma_{R}^{2}}{R^{2} \log^{4}{\left (\frac{R}{A} \right )}} + \frac{\sigma_{B}^{2}}{\log^{2}{\left (\frac{R}{A} \right )}} + \frac{B^{2} \sigma_{A}^{2}}{A^{2} \log^{4}{\left (\frac{R}{A} \right )}}\right)^{0.5}

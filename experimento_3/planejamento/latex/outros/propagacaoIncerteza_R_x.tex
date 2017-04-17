@@ -1,0 +1,12 @@
+
+            Derivadas parciais:
+
+            \frac{\partial R_x}{\partial R_1} = - \frac{R_{d} V_{g} \left(- R_{1} V_{g} + R_{1} V_{in} - R_{2} V_{g}\right)}{\left(R_{1} V_{g} + R_{2} V_{g} + R_{2} V_{in}\right)^{2}} + \frac{R_{d} \left(- V_{g} + V_{in}\right)}{R_{1} V_{g} + R_{2} V_{g} + R_{2} V_{in}}
+\frac{\partial R_x}{\partial R_2} = - \frac{R_{d} V_{g}}{R_{1} V_{g} + R_{2} V_{g} + R_{2} V_{in}} + \frac{R_{d} \left(- V_{g} - V_{in}\right) \left(- R_{1} V_{g} + R_{1} V_{in} - R_{2} V_{g}\right)}{\left(R_{1} V_{g} + R_{2} V_{g} + R_{2} V_{in}\right)^{2}}
+\frac{\partial R_x}{\partial R_d} = \frac{- R_{1} V_{g} + R_{1} V_{in} - R_{2} V_{g}}{R_{1} V_{g} + R_{2} V_{g} + R_{2} V_{in}}
+\frac{\partial R_x}{\partial V_in} = \frac{R_{1} R_{d}}{R_{1} V_{g} + R_{2} V_{g} + R_{2} V_{in}} - \frac{R_{2} R_{d} \left(- R_{1} V_{g} + R_{1} V_{in} - R_{2} V_{g}\right)}{\left(R_{1} V_{g} + R_{2} V_{g} + R_{2} V_{in}\right)^{2}}
+\frac{\partial R_x}{\partial V_g} = \frac{R_{d} \left(- R_{1} - R_{2}\right) \left(- R_{1} V_{g} + R_{1} V_{in} - R_{2} V_{g}\right)}{\left(R_{1} V_{g} + R_{2} V_{g} + R_{2} V_{in}\right)^{2}} + \frac{R_{d} \left(- R_{1} - R_{2}\right)}{R_{1} V_{g} + R_{2} V_{g} + R_{2} V_{in}}
+
+            Equação da incerteza propagada:
+
+            \sigma_{R_x} = \left(\sigma_{R_1}^{2} \left(- \frac{R_{d} V_{g} \left(- R_{1} V_{g} + R_{1} V_{in} - R_{2} V_{g}\right)}{\left(R_{1} V_{g} + R_{2} V_{g} + R_{2} V_{in}\right)^{2}} + \frac{R_{d} \left(- V_{g} + V_{in}\right)}{R_{1} V_{g} + R_{2} V_{g} + R_{2} V_{in}}\right)^{2} + \sigma_{R_2}^{2} \left(- \frac{R_{d} V_{g}}{R_{1} V_{g} + R_{2} V_{g} + R_{2} V_{in}} + \frac{R_{d} \left(- V_{g} - V_{in}\right) \left(- R_{1} V_{g} + R_{1} V_{in} - R_{2} V_{g}\right)}{\left(R_{1} V_{g} + R_{2} V_{g} + R_{2} V_{in}\right)^{2}}\right)^{2} + \frac{\sigma_{R_d}^{2} \left(- R_{1} V_{g} + R_{1} V_{in} - R_{2} V_{g}\right)^{2}}{\left(R_{1} V_{g} + R_{2} V_{g} + R_{2} V_{in}\right)^{2}} + \sigma_{V_g}^{2} \left(\frac{R_{d} \left(- R_{1} - R_{2}\right) \left(- R_{1} V_{g} + R_{1} V_{in} - R_{2} V_{g}\right)}{\left(R_{1} V_{g} + R_{2} V_{g} + R_{2} V_{in}\right)^{2}} + \frac{R_{d} \left(- R_{1} - R_{2}\right)}{R_{1} V_{g} + R_{2} V_{g} + R_{2} V_{in}}\right)^{2} + \sigma_{V_in}^{2} \left(\frac{R_{1} R_{d}}{R_{1} V_{g} + R_{2} V_{g} + R_{2} V_{in}} - \frac{R_{2} R_{d} \left(- R_{1} V_{g} + R_{1} V_{in} - R_{2} V_{g}\right)}{\left(R_{1} V_{g} + R_{2} V_{g} + R_{2} V_{in}\right)^{2}}\right)^{2}\right)^{0.5}

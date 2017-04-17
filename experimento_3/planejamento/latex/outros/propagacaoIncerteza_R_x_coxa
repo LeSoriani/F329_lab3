@@ -1,0 +1,10 @@
+
+            Derivadas parciais:
+
+            \frac{\partial R_x}{\partial R_d} = \frac{R_{1}}{R_{2}}
+\frac{\partial R_x}{\partial R_1} = \frac{R_{d}}{R_{2}}
+\frac{\partial R_x}{\partial R_2} = - \frac{R_{1} R_{d}}{R_{2}^{2}}
+
+            Equação da incerteza propagada:
+
+            \sigma_{R_x} = \left(\frac{R_{1}^{2} \sigma_{R_d}^{2}}{R_{2}^{2}} + \frac{R_{1}^{2} R_{d}^{2}}{R_{2}^{4}} \sigma_{R_2}^{2} + \frac{R_{d}^{2} \sigma_{R_1}^{2}}{R_{2}^{2}}\right)^{0.5}
