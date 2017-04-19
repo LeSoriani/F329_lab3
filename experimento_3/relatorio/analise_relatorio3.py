@@ -51,11 +51,23 @@ def gera_matrizes(path):
     V = V_raw[1:, 1:].copy()
     
     #cria grade de pontos
-    x = V_raw[0, 1:].copy()
-    y = V_raw[1:, 0].copy()
+    x = V_raw[0, 1:].copy() * 1e-2
+    y = V_raw[1:, 0].copy() * 1e-2
     X, Y = np.meshgrid(x, y)
     
     return (X, Y, V)
+
+
+
+def matriz_incerteza(X, Y, V):
+    uX = unp.umatrix(X, 0.005 / (2 * 6**2))
+    uY = unp.umatrix(Y, 0.005 / (2 * 6**2))
+    uV = unp.umatrix(
+            V,
+            lab.incerteza_voltimetro(V)
+            )
+    
+    return (uX, uY, uV)
 
 
 
@@ -103,15 +115,19 @@ def plota_campo(X, Y, V, E_x, E_y, n_linhas, titulo, path):
 
 #configuração de placas paralelas (sem nada)
 X_paralela, Y_paralela, V_paralela = gera_matrizes('dados_coletados/paralela_raw.csv')
+uX_paralela, uY_paralela, uV_paralela = matriz_incerteza(X_paralela, Y_paralela, V_paralela)
 
 #configuração de ponta
 X_ponta, Y_ponta, V_ponta = gera_matrizes('dados_coletados/ponta_raw.csv')
+uX_ponta, uY_ponta, uV_ponta = matriz_incerteza(X_ponta, Y_ponta, V_ponta)
 
 #configuração de gaiola
 X_gaiola, Y_gaiola, V_gaiola = gera_matrizes('dados_coletados/gaiola_raw.csv')
+uX_gaiola, uY_gaiola, uV_gaiola = matriz_incerteza(X_gaiola, Y_gaiola, V_gaiola)
 
 #configuração de gaiola conectada
 X_conectada, Y_conectada, V_conectada = gera_matrizes('dados_coletados/conectada_raw.csv')
+uX_conectada, uY_conectada, uV_conectada = matriz_incerteza(X_conectada, Y_conectada, V_conectada)
 
 
 
@@ -122,6 +138,10 @@ masc = (V_ponta == -1) #mascara
 V_ponta[masc] = np.nan
 X_ponta[masc] = np.nan
 Y_ponta[masc] = np.nan
+
+uV_ponta[masc] = np.nan
+uX_ponta[masc] = np.nan
+uY_ponta[masc] = np.nan
 
 
 
@@ -137,7 +157,10 @@ E_x_ponta, E_y_ponta = calc_campo(X_ponta, Y_ponta, V_ponta)
 E_x_gaiola, E_y_gaiola = calc_campo(X_gaiola, Y_gaiola, V_gaiola)
 E_x_conectada, E_y_conectada = calc_campo(X_conectada, Y_conectada, V_conectada)
 
-
+uE_x_paralela, uE_y_paralela = calc_campo(uX_paralela, uY_paralela, uV_paralela)
+uE_x_ponta, uE_y_ponta = calc_campo(uX_ponta, uY_ponta, uV_ponta)
+uE_x_gaiola, uE_y_gaiola = calc_campo(uX_gaiola, uY_gaiola, uV_gaiola)
+uE_x_conectada, uE_y_conectada = calc_campo(uX_conectada, uY_conectada, uV_conectada)
 
 
 
