@@ -65,12 +65,12 @@ def calc_campo(X, Y, V):
     '''
     
     #ddp
-    dV_x = V - V[:, 0:1] #ddp entre um ponto (x,y) e (0,y)
-    dV_y = V - 0 #ddp entre um ponto (x,y) e (x,0). 0V é o potencial do anodo
+    dV_x = np.diff(V, axis = 1) #ddp entre um ponto (x,y) e (0,y)
+    dV_y = np.diff(V, axis = 0) #ddp entre um ponto (x,y) e (x,0). 0V é o potencial do anodo
 
     #distância aos eixos
-    dx = X - X[:, 0:1] #distancia em x entre (x,y) e (0,y)
-    dy = Y - 0 #distancia em y entre (x,y) e (x,0). 0 é a posição y do anodo
+    dx = np.diff(X, axis = 1) #distancia em x entre (x,y) e (0,y)
+    dy = np.diff(Y, axis = 0) #distancia em y entre (x,y) e (x,0). 0 é a posição y do anodo
     
     #campo
     E_x = - dV_x / dx #componente x
@@ -86,7 +86,7 @@ def plota_campo(X, Y, V, E_x, E_y, n_linhas, titulo, path):
     plt.clabel(CS, fontsize = 10, inline = True) #legenda das linhas
     
     #plota o campo ponto a ponto
-    plt.quiver(X, Y, E_x, E_y)
+    plt.quiver(X[:-1, :-1], Y[:-1, :-1], E_x[:-1, :], E_y[:, :-1])
     
     #meta dados do plot
     plt.title(titulo)
@@ -204,9 +204,6 @@ plota_campo(
 #%%
 ###############################################################################
 #salvando dados importantes em latex
-
-
-
 
 
 #%%
